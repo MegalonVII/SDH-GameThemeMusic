@@ -1,6 +1,6 @@
 {
   "name": "sdh-gamethememusic",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Play theme songs on your game pages",
   "type": "module",
   "scripts": {
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/OMGDuke/SDH-GameThemeMusic.git"
+    "url": "git+https://github.com/MegalonVII/SDH-GameThemeMusic.git"
   },
   "keywords": [
     "decky",
@@ -19,17 +19,17 @@
     "steam-deck",
     "deck"
   ],
-  "author": "OMGDuke",
+  "author": "OMGDuke, MegalonVII",
   "license": "GPL-2.0-or-later",
   "bugs": {
-    "url": "https://github.com/OMGDuke/SDH-GameThemeMusic/issues"
+    "url": "https://github.com/MegalonVII/SDH-GameThemeMusic/issues"
   },
-  "homepage": "https://github.com/OMGDuke/SDH-GameThemeMusic#readme",
+  "homepage": "https://github.com/MegalonVII/SDH-GameThemeMusic#readme",
   "remote_binary": [
     {
       "name": "yt-dlp",
-      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2024.11.18/yt-dlp",
-      "sha256hash": "78b4454c83d0f7efe9b26163e82bede0febf0039ae6bacf2963abcae941ac11a"
+      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2025.09.26/yt-dlp",
+      "sha256hash": "9215a371883aea75f0f2102c679333d813d9a5c3bceca212879a4a741a5b4657"
     }
   ],
   "devDependencies": {

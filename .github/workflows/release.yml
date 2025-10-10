@@ -1,0 +1,35 @@
+name: Release Game Theme Music
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches: ['main']
+  workflow_dispatch:
+
+jobs:
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: SDH-GameThemeMusic
+          path: SDH-GameThemeMusic
+
+      - name: zip/tar release
+        run: |
+          zip -r SDH-GameThemeMusic.zip SDH-GameThemeMusic/*
+          tar -czvf SDH-GameThemeMusic.tar.gz SDH-GameThemeMusic
+
+      - name: Create a release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'SDH-GameThemeMusic.zip,SDH-GameThemeMusic.tar.gz'
+          allowUpdates: true
+          token: ${{ secrets.GITHUB_TOKEN }}

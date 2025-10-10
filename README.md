@@ -4,9 +4,9 @@
 
 ## A Continuation Fork
 
-This is a fork from me of this plugin meant to be a continuation of the plugin itself. In case any issues arise (like how the plugin has been broken for several months now as of 10/9/2025) I will try my best to work at this, though per licensing contributions are always welcome.
+This is a fork from me of this plugin meant to be a continuation of the plugin itself. In case any issues arise I will try my best to work at this, though per licensing contributions are always welcome.
 
-[![Crowdin](https://badges.crowdin.net/sdh-gamethememusic/localized.svg)](https://crowdin.com/project/sdh-gamethememusic) [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://deckbrew.xyz/discord)
+[![Crowdin](https://badges.crowdin.net/sdh-gamethememusic/localized.svg)](https://crowdin.com/project/sdh-gamethememusic) [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://deckbrew.xyz/discord) [![Build Game Theme Music](https://github.com/MegalonVII/SDH-GameThemeMusic/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/MegalonVII/SDH-GameThemeMusic/actions/workflows/build.yml)
 
 Play theme songs on your game pages. Compatible with the [AudioLoader](https://github.com/EMERALD0874/SDH-AudioLoader) plugin (AudioLoader version >= 1.5.0).
 

@@ -1,6 +1,10 @@
 # Game Theme Music
 
-# No longer Maintained.
+# Occasionally Maintained.
+
+## A Continuation Fork
+
+This is a fork from me of this plugin meant to be a continuation of the plugin itself. In case any issues arise (like how the plugin has been broken for several months now as of 10/9/2025) I will try my best to work at this, though per licensing contributions are always welcome.
 
 [![Crowdin](https://badges.crowdin.net/sdh-gamethememusic/localized.svg)](https://crowdin.com/project/sdh-gamethememusic) [![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://deckbrew.xyz/discord)
 
@@ -42,7 +46,7 @@ This plugin requires [Decky Loader](https://github.com/SteamDeckHomebrew/decky-l
 
 ## Other Plugins
 
-Check out my other plugin [ProtonDB Badges ❤️](https://github.com/OMGDuke/protondb-decky)
+Check out Duke's other plugin [ProtonDB Badges ❤️](https://github.com/OMGDuke/protondb-decky)
 
 ## Localisation
 

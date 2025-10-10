@@ -152,7 +152,7 @@ class Plugin:
         # Simple fix to make any lingering m4a files usable. Does nothing if fails.
         music_path = Path(self.music_path)
         try:
-            (f"{self.music_path}/{id}.m4a").rename(f"{self.music_path}/{id}.webm")
+            (f"{music_path}/{id}.m4a").rename(f"{music_path}/{id}.webm")
         except:
             pass
 

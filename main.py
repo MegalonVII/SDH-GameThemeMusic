@@ -71,7 +71,7 @@ class Plugin:
             stdout=asyncio.subprocess.PIPE,
             # The returned JSON can get rather big, so we set a generous limit of 10 MB.
             limit=10 * 1024**2,
-            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/lib"},
+            env={**os.environ, "LD_LIBRARY_PATH": f"{os.environ.get('LD_LIBRARY_PATH', '')}:/usr/lib:/lib:/usr/lib64"},
         )
 
     async def next_yt_result(self):
@@ -122,7 +122,7 @@ class Plugin:
             "-f",
             "bestaudio",
             stdout=asyncio.subprocess.PIPE,
-            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/lib"},
+            env={**os.environ, "LD_LIBRARY_PATH": f"{os.environ.get('LD_LIBRARY_PATH', '')}:/usr/lib:/lib:/usr/lib64"},
         )
         if (
             result.stdout is None
@@ -145,7 +145,7 @@ class Plugin:
             "%(id)s.%(ext)s",
             "-P",
             self.music_path,
-            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/lib"},
+            env={**os.environ, "LD_LIBRARY_PATH": f"{os.environ.get('LD_LIBRARY_PATH', '')}:/usr/lib:/lib:/usr/lib64"},
         )
         await process.communicate()
 

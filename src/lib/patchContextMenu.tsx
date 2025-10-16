@@ -4,6 +4,7 @@ import {
   fakeRenderComponent,
   findInReactTree,
   findModuleChild,
+  findInTree,
   MenuItem,
   Navigation,
   Patch
@@ -24,20 +25,33 @@ function ChangeMusicButton({ appId }: { appId: number }) {
   )
 }
 
-// Always add before "Properties..."
-const spliceChangeMusic = (children: any[], appid: number) => {
-  children.find((x: any) => x?.key === 'properties')
-  const propertiesMenuItemIdx = children.findIndex((item) =>
-    findInReactTree(
-      item,
-      (x) => x?.onSelected && x.onSelected.toString().includes('AppProperties')
+// Always add before "Properties...". If not found, skip insertion.
+const spliceChangeMusic = (children: any, appid: number | undefined) => {
+  if (!Array.isArray(children) || typeof appid !== 'number') return
+
+  try {
+    const existingIdx = children.findIndex(
+      (x: any) => x?.key === 'game-theme-music-change-music'
     )
-  )
-  children.splice(
-    propertiesMenuItemIdx,
-    0,
-    <ChangeMusicButton key="game-theme-music-change-music" appId={appid} />
-  )
+    if (existingIdx !== -1) children.splice(existingIdx, 1)
+  } catch (_) {
+    // no-op
+  }
+
+  let insertIdx = -1
+  try {
+    insertIdx = children.findIndex((item: any) =>
+      findInReactTree(
+        item,
+        (x: any) => x?.onSelected && x.onSelected.toString().includes('AppProperties')
+      )
+    )
+  } catch (_) {
+    insertIdx = -1
+  }
+
+  if (insertIdx < 0) return
+  children.splice(insertIdx, 0, <ChangeMusicButton appId={appid} />)
 }
 
 /**
@@ -59,43 +73,80 @@ const contextMenuPatch = (LibraryContextMenu: any) => {
     LibraryContextMenu.prototype,
     'render',
     (_: Record<string, unknown>[], component: any) => {
-      const appid: number = component._owner.pendingProps.overview.appid
+      let appid: number | undefined
+      try {
+        appid = component?._owner?.pendingProps?.overview?.appid
+      } catch (_) {
+        appid = undefined
+      }
+
+      // Oct 2025 client
+      if (typeof appid !== 'number') {
+        try {
+          const found = findInTree(
+            component?.props?.children,
+            (x: any) => x?.app?.appid,
+            { walkable: ['props', 'children'] }
+          )
+          if (found?.app?.appid) appid = found.app.appid
+        } catch (_) {
+          // no-op
+        }
+      }
 
       if (!patches.inner) {
         patches.inner = afterPatch(
-          component.type.prototype,
+          component.type?.prototype ?? component,
           'shouldComponentUpdate',
           ([nextProps]: any, shouldUpdate: any) => {
+            const nextChildren = nextProps?.children
+            if (!Array.isArray(nextChildren)) return shouldUpdate
+
             try {
-              const gtmIdx = nextProps.children.findIndex(
+              const gtmIdx = nextChildren.findIndex(
                 (x: any) => x?.key === 'game-theme-music-change-music'
               )
-              if (gtmIdx != -1) nextProps.children.splice(gtmIdx, 1)
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (e) {
-              return component
+              if (gtmIdx !== -1) nextChildren.splice(gtmIdx, 1)
+            } catch (_) {
+              return shouldUpdate
             }
 
             if (shouldUpdate === true) {
-              let updatedAppid: number = appid
-              // find the first menu component that has the correct appid assigned to _owner
-              const parentOverview = nextProps.children.find(
-                (x: any) =>
-                  x?._owner?.pendingProps?.overview?.appid &&
-                  x._owner.pendingProps.overview.appid !== appid
-              )
-              // if found then use that appid
-              if (parentOverview) {
-                updatedAppid = parentOverview._owner.pendingProps.overview.appid
+              let updatedAppid: number | undefined = appid
+              try {
+                const parentOverview = nextChildren.find(
+                  (x: any) => x?._owner?.pendingProps?.overview?.appid
+                )
+                if (typeof parentOverview?._owner?.pendingProps?.overview?.appid === 'number') {
+                  updatedAppid = parentOverview._owner.pendingProps.overview.appid
+                }
+              } catch (_) {
+                // no-op
               }
-              spliceChangeMusic(nextProps.children, updatedAppid)
+
+              // Oct 2025 client
+              if (typeof updatedAppid !== 'number') {
+                try {
+                  const found = findInTree(
+                    nextChildren,
+                    (x: any) => x?.app?.appid,
+                    { walkable: ['props', 'children'] }
+                  )
+                  if (found?.app?.appid) updatedAppid = found.app.appid
+                } catch (_) {
+                  // no-op
+                }
+              }
+
+              spliceChangeMusic(nextChildren, updatedAppid)
             }
 
             return shouldUpdate
           }
         )
       } else {
-        spliceChangeMusic(component.props.children, appid)
+        const compChildren = component?.props?.children
+        spliceChangeMusic(compChildren, appid)
       }
 
       return component
@@ -112,7 +163,7 @@ const contextMenuPatch = (LibraryContextMenu: any) => {
  * Game context menu component.
  */
 export const LibraryContextMenu = fakeRenderComponent(
-  findModuleChild((m) => {
+  findModuleChild((m: any) => {
     if (typeof m !== 'object') return
     for (const prop in m) {
       if (

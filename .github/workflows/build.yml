@@ -2,8 +2,7 @@ name: Build Game Theme Music
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: ['main']
   pull_request:
     branches: ['main']
   workflow_dispatch:

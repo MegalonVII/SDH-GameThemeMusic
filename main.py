@@ -47,10 +47,12 @@ class Plugin:
         return self.settings.getSetting(key, default)
 
     async def search_yt(self, term: str):
-        # Make sure the yt-dlp binary is executable
+        # Make sure the yt-dlp and deno binaries are executable
         try:
-            path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp")
-            path.chmod(0o755) if path.exists() else None
+            yt_dlp_path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp")
+            deno_path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/deno")
+            yt_dlp_path.chmod(0o755) if yt_dlp_path.exists() else None
+            deno_path.chmod(0o755) if deno_path.exists() else None
         except:
             exit(1)
 
@@ -62,6 +64,8 @@ class Plugin:
                 await self.yt_process.communicate()
         self.yt_process = await asyncio.create_subprocess_exec(
             f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp",
+            "--use-js",
+            "deno",
             f"ytsearch10:{term}",
             "-j",
             "-f",
@@ -117,12 +121,15 @@ class Plugin:
                 return f"data:audio/{extension};base64,{base64.b64encode(file.read()).decode()}"
         result = await asyncio.create_subprocess_exec(
             f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp",
+            "--use-js",
+            "deno",
             f"{id}",
             "-j",
             "-f",
             "bestaudio",
+            "--force-ipv4",
             stdout=asyncio.subprocess.PIPE,
-            env={**os.environ, "LD_LIBRARY_PATH": f"{os.environ.get('LD_LIBRARY_PATH', '')}:/usr/lib:/lib:/usr/lib64"},
+            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/lib:/usr/lib64:/lib64"},
         )
         if (
             result.stdout is None
@@ -138,6 +145,8 @@ class Plugin:
             return
         process = await asyncio.create_subprocess_exec(
             f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp",
+            "--use-js",
+            "deno",
             f"{id}",
             "-f",
             "bestaudio",
@@ -145,7 +154,8 @@ class Plugin:
             "%(id)s.%(ext)s",
             "-P",
             self.music_path,
-            env={**os.environ, "LD_LIBRARY_PATH": f"{os.environ.get('LD_LIBRARY_PATH', '')}:/usr/lib:/lib:/usr/lib64"},
+            "--force-ipv4",
+            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/lib:/usr/lib64:/lib64"},
         )
         await process.communicate()
 

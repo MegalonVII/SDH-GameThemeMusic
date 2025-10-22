@@ -30,6 +30,11 @@
       "name": "yt-dlp",
       "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2025.10.14/yt-dlp",
       "sha256hash": "104d8103f871fe5f165a945ab82884fa4f34007a8ab0d377fbad54482b6e0b68"
+    },
+    {
+      "name": "deno",
+      "url": "https://github.com/denoland/deno/releases/download/v1.45.4/deno-x86_64-unknown-linux-gnu.zip",
+      "sha256hash": "a8b4b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3"
     }
   ],
   "devDependencies": {

@@ -63,6 +63,9 @@
         "react",
         "react-dom"
       ]
-    }
+    },
+    "onlyBuiltDependencies": [
+      "deno"
+    ]
   }
 }

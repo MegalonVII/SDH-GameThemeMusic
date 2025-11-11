@@ -199,12 +199,9 @@ class Plugin:
             yt_dlp_path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp")
             bin_dir = yt_dlp_path.parent
             
-            # Ensure bin directory exists
             bin_dir.mkdir(parents=True, exist_ok=True)
             
-            # Fetch latest release info from GitHub API
             async with aiohttp.ClientSession() as session:
-                # Get latest release
                 async with session.get(
                     "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest",
                     ssl=self.ssl_context
@@ -217,7 +214,6 @@ class Plugin:
                     release_data = await response.json()
                     tag_name = release_data.get("tag_name", "")
                 
-                # Find the yt-dlp binary asset (not the .exe or other platform-specific files)
                 assets = release_data.get("assets", [])
                 binary_asset = None
                 for asset in assets:
@@ -239,7 +235,6 @@ class Plugin:
                         "message": "Could not get download URL"
                     }
                 
-                # Download the binary
                 async with session.get(download_url, ssl=self.ssl_context) as download_response:
                     if download_response.status != 200:
                         return {
@@ -247,18 +242,15 @@ class Plugin:
                             "message": f"Failed to download binary: HTTP {download_response.status}"
                         }
                     
-                    # Write to temporary file first, then replace
                     temp_path = yt_dlp_path.with_suffix(".tmp")
                     with open(temp_path, "wb") as f:
                         async for chunk in download_response.content.iter_chunked(8192):
                             f.write(chunk)
                     
-                    # Replace old binary with new one
                     if yt_dlp_path.exists():
                         yt_dlp_path.unlink()
                     temp_path.rename(yt_dlp_path)
                     
-                    # Make executable
                     yt_dlp_path.chmod(0o755)
                     
                     return {

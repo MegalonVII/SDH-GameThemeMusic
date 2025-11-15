@@ -18,5 +18,6 @@ Since this is a continuation fork of the original project, I think I'd like to h
     - Another personal preference.  
 - [ ] Add Button To Update YT-DLP Binary
     -  This may fix some plugin breakages, as YouTube often changes things in the backend that break YT-DLP until it is updated.
+- [ ] Stop Audio Playback When Game Is Running
 
 Please let me know if I should add more to this roadmap! Reach out to me on Discord or submit a PR!

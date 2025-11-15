@@ -16,7 +16,7 @@ Since this is a continuation fork of the original project, I think I'd like to h
     - Again, this boils down to personal preference. Should other contributors and users tell this is not a good idea, I will take this down.
 - [ ] Make Default Muted Globally.
     - Another personal preference.  
-- [ ] Add Button To Update YT-DLP Binary
+- [x] Add Button To Update YT-DLP Binary
     -  This may fix some plugin breakages, as YouTube often changes things in the backend that break YT-DLP until it is updated.
 - [ ] Stop Audio Playback When Game Is Running
 

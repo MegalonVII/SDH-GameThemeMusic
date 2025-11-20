@@ -11,6 +11,9 @@ importers:
       '@decky/api':
         specifier: ^1.1.2
         version: 1.1.2
+      deno:
+        specifier: ^2.5.6
+        version: 2.5.6
       localforage:
         specifier: ^1.10.0
         version: 1.10.0
@@ -84,6 +87,36 @@ packages:
 
   '@decky/ui@4.8.2':
     resolution: {integrity: sha512-w4jRPp3VQ6GIiZleHbWWYlSBpulKlWcP15CKEOVanySpuXVg1PvN1eaw+pZ8hRW/D2+pXTtBALDQKYTWo29UiA==}
+
+  '@deno/darwin-arm64@2.5.6':
+    resolution: {integrity: sha512-aQoAQSQdA8PVhS9ibx/vl1xtP0ngiZCD2tW/PqUd13fmwM12m3O2V8/oyMTzqXZtT/PnoiOtcqtujbF/yRUyVg==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@deno/darwin-x64@2.5.6':
+    resolution: {integrity: sha512-9GrCi8ga5mgYB1b/8Pj9vRF4VVNLTuzyVd6bL0vEKFBZ/w27cQj0oY2o60t8AUTpW8iXpJfXMDoY7j4yiK1Xug==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@deno/linux-arm64-glibc@2.5.6':
+    resolution: {integrity: sha512-HiAHeFBmNRsJFulNMQ2LX3k+IvAIhGAo9JcW/0PwrNa3WbMql9wq37pOPp8DkW2VUTvghh3FZm6GUcryUml4bQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@deno/linux-x64-glibc@2.5.6':
+    resolution: {integrity: sha512-aYct9Vp1RgKR2yW9hyWGTIL0EN0MgqaBuD0fbnQHygd4ftSfd/aWcBB3+n7OTUX/YNWSxYkOMLV1N8RWUCj4jw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@deno/win32-arm64@2.5.6':
+    resolution: {integrity: sha512-HZq7gShjAehx1d2qg2cHRJJbxpbBk8kVmoPiZpILnN66XRwbNlWtrAUwsXNyHuBHcaT+7LgPTRUzX3KuDYXbwg==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@deno/win32-x64@2.5.6':
+    resolution: {integrity: sha512-GRBl8+CQbNeTp9CrxbCuAuqxi592NZfac1AvDgFEPt8O9aZe/2k+y7AQwESJGxEvyJl1vw6UV24qdf9N7pCM9Q==}
+    cpu: [x64]
+    os: [win32]
 
   '@eslint-community/eslint-utils@4.4.0':
     resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
@@ -684,6 +717,10 @@ packages:
   del@5.1.0:
     resolution: {integrity: sha512-wH9xOVHnczo9jN2IW68BabcecVPxacIA3g/7z6vhSU/4stOKQzeCRK0yD0A24WiAAUJmmVpWqrERcTxnLo3AnA==}
     engines: {node: '>=8'}
+
+  deno@2.5.6:
+    resolution: {integrity: sha512-SSe2gCf41A/uln54H7xdKZFtiDt+reBxYM4IaJLRH/NpEIE5T3VOcLSLHPaJzyiTvZe2xMz1QFcpg4cco5rNsA==}
+    hasBin: true
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -1733,6 +1770,24 @@ snapshots:
 
   '@decky/ui@4.8.2': {}
 
+  '@deno/darwin-arm64@2.5.6':
+    optional: true
+
+  '@deno/darwin-x64@2.5.6':
+    optional: true
+
+  '@deno/linux-arm64-glibc@2.5.6':
+    optional: true
+
+  '@deno/linux-x64-glibc@2.5.6':
+    optional: true
+
+  '@deno/win32-arm64@2.5.6':
+    optional: true
+
+  '@deno/win32-x64@2.5.6':
+    optional: true
+
   '@eslint-community/eslint-utils@4.4.0(eslint@9.15.0)':
     dependencies:
       eslint: 9.15.0
@@ -2374,6 +2429,15 @@ snapshots:
       p-map: 3.0.0
       rimraf: 3.0.2
       slash: 3.0.0
+
+  deno@2.5.6:
+    optionalDependencies:
+      '@deno/darwin-arm64': 2.5.6
+      '@deno/darwin-x64': 2.5.6
+      '@deno/linux-arm64-glibc': 2.5.6
+      '@deno/linux-x64-glibc': 2.5.6
+      '@deno/win32-arm64': 2.5.6
+      '@deno/win32-x64': 2.5.6
 
   dir-glob@3.0.1:
     dependencies:

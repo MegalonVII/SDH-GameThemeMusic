@@ -28,8 +28,8 @@
   "remote_binary": [
     {
       "name": "yt-dlp",
-      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2025.10.22/yt-dlp",
-      "sha256hash": "fd99687645340163094d8b21390c59102900f3e7bcdd1fc0112622bf72989d4f"
+      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2025.11.12/yt-dlp",
+      "sha256hash": "89a0d9058ea9018e380b7771898ff46e393a1986dcd13fef331693c87ce1fca4"
     }
   ],
   "devDependencies": {
@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@decky/api": "^1.1.2",
-    "deno": "^2.5.4",
+    "deno": "^2.5.6",
     "localforage": "^1.10.0",
     "qrcode.react": "^4.1.0",
     "react-icons": "^5.3.0",

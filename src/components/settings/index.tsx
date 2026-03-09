@@ -47,7 +47,8 @@ export default function Index() {
     setUseYtDlp,
     setDownloadAudio,
     setInvidiousInstance,
-    setVolume
+    setVolume,
+    setMusicProvider
   } = useSettings()
 
   const t = useTranslations()
@@ -171,6 +172,19 @@ export default function Index() {
   return (
     <div>
       <PanelSection title={t('settings')}>
+        <PanelSectionRow>
+          <DropdownItem
+            label={t('musicProvider')}
+            description={t('musicProviderDescription')}
+            menuLabel={t('musicProvider')}
+            rgOptions={[
+              { data: 'youtube', label: 'YouTube' },
+              { data: 'khinsider', label: 'KHInsider' }
+            ]}
+            selectedOption={settings.musicProvider || 'youtube'}
+            onChange={(newVal) => setMusicProvider(newVal.data)}
+          />
+        </PanelSectionRow>
         <PanelSectionRow>
           <SliderField
             label={t('volume')}
@@ -320,8 +334,8 @@ export default function Index() {
       <PanelSection title={t('extras')}>
         <PanelSocialButton icon={<SiKofi fill="#FF5E5B" />} url="https://ko-fi.com/MegalonVII">Ko-fi</PanelSocialButton>
         <PanelSocialButton icon={<SiDiscord fill="#5865F2" />} url="https://deckbrew.xyz/discord">Discord</PanelSocialButton>
-        <PanelSocialButton icon={<SiGithub fill="#f5f5f5" />} url="https://github.com/MegalonVII/SDH-GameThemeMusic/">Github</PanelSocialButton>
-        <PanelSocialButton icon={<SiCrowdin fill="#FFFFFF" />} url="https://crowdin.com/project/sdh-gamethememusic">{t('helpTranslate')}</PanelSocialButton>
+        <PanelSocialButton icon={<SiGithub fill="#f5f5f5" />} url="https://github.com/MegalonVII/GameMusicManager/">Github</PanelSocialButton>
+        <PanelSocialButton icon={<SiCrowdin fill="#FFFFFF" />} url="https://crowdin.com/project/GameMusicManager">{t('helpTranslate')}</PanelSocialButton>
       </PanelSection>
     </div>
   )

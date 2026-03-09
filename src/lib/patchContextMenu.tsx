@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import {
   afterPatch,
   fakeRenderComponent,
@@ -25,7 +25,6 @@ function ChangeMusicButton({ appId }: { appId: number }) {
   )
 }
 
-// Always add before "Properties...". If not found, skip insertion.
 const spliceChangeMusic = (children: any, appid: number | undefined) => {
   if (!Array.isArray(children) || typeof appid !== 'number') return
 

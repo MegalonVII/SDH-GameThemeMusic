@@ -1,5 +1,6 @@
 import {
   DialogButton,
+  DropdownItem,
   Focusable,
   ModalRoot,
   PanelSection,
@@ -10,7 +11,7 @@ import {
   useParams
 } from '@decky/ui'
 import { useEffect, useState } from 'react'
-import { useSettings } from '../../hooks/useSettings'
+import { Settings } from '../../hooks/useSettings'
 import AudioPlayer from './audioPlayer'
 import { getCache, updateCache } from '../../cache/musicCache'
 import useTranslations from '../../hooks/useTranslations'
@@ -24,7 +25,9 @@ export default function ChangePage({
   setInitialSearch,
   handlePlay,
   loading,
-  videos
+  videos,
+  settings,
+  setMusicProvider
 }: {
   videos: (YouTubeVideoPreview & { isPlaying: boolean })[]
   loading: boolean
@@ -32,14 +35,19 @@ export default function ChangePage({
   customSearch: (term: string) => void
   setInitialSearch: () => string
   currentSearch: string
+  settings: Settings
+  setMusicProvider: (value: Settings['musicProvider']) => void
 }) {
   const t = useTranslations()
-  const { settings } = useSettings()
   const { appid } = useParams<{ appid: string }>()
   const appDetails = appStore.GetAppOverviewByGameID(parseInt(appid))
   const appName = appDetails?.display_name?.replace(/(™|®|©)/g, '')
   const [selected, setSelected] = useState<string | undefined>()
   const [searchTerm, setSearchTerm] = useState(currentSearch)
+
+  useEffect(() => {
+    setSearchTerm(currentSearch)
+  }, [currentSearch])
 
   useEffect(() => {
     async function getData() {
@@ -55,7 +63,7 @@ export default function ChangePage({
     audioUrl: string
   }) {
     if (settings.downloadAudio) {
-      const success = await getResolver(settings.useYtDlp).downloadAudio({
+      const success = await getResolver(settings.useYtDlp, settings.musicProvider).downloadAudio({
         id: audio.videoId,
         url: audio.audioUrl
       })
@@ -76,6 +84,17 @@ export default function ChangePage({
     <div>
       <h2 style={{ margin: '20px 0' }}>{appName}</h2>
       <PanelSection>
+        <PanelSectionRow>
+          <DropdownItem
+            label={t('musicProvider')}
+            rgOptions={[
+              { data: 'youtube', label: 'YouTube' },
+              { data: 'khinsider', label: 'KHInsider' }
+            ]}
+            selectedOption={settings.musicProvider || 'youtube'}
+            onChange={(newVal: any) => setMusicProvider(newVal.data)}
+          />
+        </PanelSectionRow>
         <PanelSectionRow>
           <Focusable
             style={{

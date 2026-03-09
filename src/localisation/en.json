@@ -6,7 +6,7 @@
     "backupOverridesLabel": "Backup all overrides",
     "backupSuccessful": "Backup successful",
     "backupSuccessfulDetails": "Overrides have been backed up.",
-    "changeThemeMusic": "Change Theme Music",
+    "changeThemeMusic": "Game Background Music",
     "close": "Close",
     "defaultMuted": "Default Muted",
     "defaultMutedDescription": "Don't play music unless manually set",
@@ -60,5 +60,7 @@
     "useYtDlp": "Use yt-dlp",
     "useYtDlpDescription": "Access YouTube directly without Invidious",
     "volume": "Music Volume",
-    "volumeDescription": "Adjust music volume"
+    "volumeDescription": "Adjust music volume",
+    "musicProvider": "Music Provider",
+    "musicProviderDescription": "Where to look for music (YouTube or KHInsider)"
 }

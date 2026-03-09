@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { createContext, FC, useContext, useEffect, useState } from 'react'
 
 interface PublicAudioLoaderCompatState {
@@ -6,22 +6,18 @@ interface PublicAudioLoaderCompatState {
   onAppPage: boolean
 }
 
-// The localThemeEntry interface refers to the theme data as given by the python function, the Theme class refers to a theme after it has been formatted and the generate function has been added
-
 interface PublicAudioLoaderCompatStateContext
   extends PublicAudioLoaderCompatState {
   setGamesRunning(gamesRunning: number[]): void
   setOnThemePage(onAppPage: boolean): void
 }
 
-// This class creates the getter and setter functions for all of the global state data.
 export class AudioLoaderCompatState {
   private delayMs = 1000
   private gamesRunning: number[] = []
   private onThemePage: boolean = false
   private lastOnThemePageTime: number = 0
 
-  // You can listen to this eventBus' 'stateUpdate' event and use that to trigger a useState or other function that causes a re-render
   public eventBus = new EventTarget()
 
   getPublicState() {
@@ -38,8 +34,6 @@ export class AudioLoaderCompatState {
 
     this.gamesRunning = gamesRunning
 
-    // AudioLoader will automatically start playing music when it detects that no games are running,
-    // so we need to force it to stop so we can control whether it plays or not
     if (noGamesRunning && oldGamesRunning.length > 0) {
       for (let i = 0; i < this.delayMs; i += incrMs) {
         setTimeout(() => {
@@ -58,8 +52,6 @@ export class AudioLoaderCompatState {
   setOnThemePage(onAppPage: boolean) {
     const time = Date.now()
 
-    // We need to delay the setting of onThemePage if false to
-    // prevent AudioLoader music from playing during page transitions
     setTimeout(
       () => {
         this.setOnThemePageInternal(onAppPage, time)
@@ -106,7 +98,6 @@ interface ProviderProps {
   children?: React.ReactNode
 }
 
-// This is a React Component that you can wrap multiple separate things in, as long as they both have used the same instance of the CssLoaderState class, they will have synced state
 export const AudioLoaderCompatStateContextProvider: FC<ProviderProps> = ({
   children,
   AudioLoaderCompatStateClass

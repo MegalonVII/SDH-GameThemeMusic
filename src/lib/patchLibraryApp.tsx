@@ -21,7 +21,6 @@ function patchLibraryApp(AudioLoaderCompatState: AudioLoaderCompatState) {
           (tree) =>
             findInReactTree(
               tree,
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (x: any) => x?.props?.children?.props?.overview
             )?.props?.children
         ],

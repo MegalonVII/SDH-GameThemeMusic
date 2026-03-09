@@ -28,6 +28,11 @@ const useAudioPlayer = (
     setOnThemePage(true)
   }
 
+  audioPlayer.onerror = (e) => {
+    console.error('AudioPlayer Error:', e)
+    setIsReady(false)
+  }
+
   const [isPlaying, setIsPlaying] = useState(false)
   const [isReady, setIsReady] = useState(false)
 
@@ -35,8 +40,12 @@ const useAudioPlayer = (
     if (audioUrl?.length) {
       audioPlayer.src = audioUrl
       audioPlayer.loop = true
+      if (audioPlayer.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        setIsReady(true)
+        setOnThemePage(true)
+      }
     }
-  }, [audioUrl])
+  }, [audioUrl, audioPlayer])
 
   useEffect(() => {
     return () => {

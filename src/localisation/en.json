@@ -59,6 +59,12 @@
     "supportLabel": "Support",
     "useYtDlp": "Use yt-dlp",
     "useYtDlpDescription": "Access YouTube directly without Invidious",
+    "updateYtDlp": "Update yt-dlp",
+    "updateYtDlpLabel": "Update yt-dlp binary",
+    "updateYtDlpDescription": "Download and install the latest version of yt-dlp",
+    "updateYtDlpSuccess": "Update successful",
+    "updateYtDlpFailed": "Update failed",
+    "updating": "Updating...",
     "volume": "Music Volume",
     "volumeDescription": "Adjust music volume"
 }

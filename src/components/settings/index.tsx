@@ -14,7 +14,7 @@ import {
   SliderField,
   ToggleField
 } from '@decky/ui'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { SiCrowdin, SiDiscord, SiGithub, SiKofi } from "react-icons/si";
 import { useSettings } from '../../hooks/useSettings'
 import useTranslations from '../../hooks/useTranslations'
@@ -25,6 +25,7 @@ import {
   FaVolumeMute,
   FaVolumeUp,
   FaYoutube,
+  FaSync,
 } from 'react-icons/fa'
 import {
   clearCache,
@@ -35,7 +36,7 @@ import {
   listCacheBackups
 } from '../../cache/musicCache'
 import useInvidiousInstances from '../../hooks/useInvidiousInstances'
-import { toaster } from '@decky/api'
+import { toaster, call } from '@decky/api'
 import { getResolver } from '../../actions/audio'
 import PanelSocialButton from './socialButton'
 
@@ -51,6 +52,7 @@ export default function Index() {
   } = useSettings()
 
   const t = useTranslations()
+  const [isUpdatingYtDlp, setIsUpdatingYtDlp] = useState(false)
 
   const { instances, instancesLoading } = useInvidiousInstances()
   console.log(instances)
@@ -208,6 +210,50 @@ export default function Index() {
             }}
           />
         </PanelSectionRow>
+        {settings.useYtDlp && (
+          <PanelSectionRow>
+            <ButtonItem
+              label={t('updateYtDlpLabel')}
+              description={t('updateYtDlpDescription')}
+              layout="below"
+              disabled={isUpdatingYtDlp}
+              onClick={async () => {
+                setIsUpdatingYtDlp(true)
+                try {
+                  const result = await call<[], { success: boolean; message: string }>(
+                    'update_yt_dlp'
+                  )
+                  if (result.success) {
+                    toaster.toast({
+                      title: t('updateYtDlpSuccess'),
+                      body: result.message,
+                      icon: <FaSync />,
+                      duration: 3000
+                    })
+                  } else {
+                    toaster.toast({
+                      title: t('updateYtDlpFailed'),
+                      body: result.message,
+                      icon: <FaSync />,
+                      duration: 5000
+                    })
+                  }
+                } catch (error) {
+                  toaster.toast({
+                    title: t('updateYtDlpFailed'),
+                    body: error instanceof Error ? error.message : String(error),
+                    icon: <FaSync />,
+                    duration: 5000
+                  })
+                } finally {
+                  setIsUpdatingYtDlp(false)
+                }
+              }}
+            >
+              {isUpdatingYtDlp ? t('updating') : t('updateYtDlp')}
+            </ButtonItem>
+          </PanelSectionRow>
+        )}
         {!settings.useYtDlp && (
           <PanelSectionRow>
             <DropdownItem

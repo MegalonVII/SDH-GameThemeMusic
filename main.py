@@ -69,10 +69,23 @@ class Plugin:
             "--match-filters",
             f"duration<?{20*60}",  # 20 minutes is too long.
             stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
             # The returned JSON can get rather big, so we set a generous limit of 10 MB.
             limit=10 * 1024**2,
             env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/usr/lib64:/lib:/lib64"},
         )
+
+        # Log stderr in the background so failures are visible in decky logs
+        async def log_stderr():
+            if not self.yt_process or not self.yt_process.stderr:
+                return
+            while True:
+                line = await self.yt_process.stderr.readline()
+                if not line:
+                    break
+                logger.warning(f"yt-dlp stderr: {line.decode().strip()}")
+
+        asyncio.create_task(log_stderr())
 
     async def next_yt_result(self):
         async with self.yt_process_lock:
@@ -82,8 +95,13 @@ class Plugin:
                 or not (line := (await output.readline()).strip())
             ):
                 return None
-            entry = json.loads(line)
-            return self.entry_to_info(entry)
+            logger.debug(f"Received result line: {line[:100]}...")
+            try:
+                entry = json.loads(line)
+                return self.entry_to_info(entry)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse yt-dlp output: {e}. Line: {line[:200]}")
+                return None
 
     @staticmethod
     def entry_to_info(entry):

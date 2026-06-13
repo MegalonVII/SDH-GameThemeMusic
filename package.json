@@ -28,13 +28,13 @@
   "remote_binary": [
     {
       "name": "yt-dlp",
-      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2025.10.22/yt-dlp",
-      "sha256hash": "fd99687645340163094d8b21390c59102900f3e7bcdd1fc0112622bf72989d4f"
+      "url": "https://github.com/yt-dlp/yt-dlp/releases/download/2026.06.09/yt-dlp",
+      "sha256hash": "e5d57466682cfa9d61e9cf7c8a4f09b00f4a62af37d3bbdc4bcffdf63615feac"
     }
   ],
   "devDependencies": {
-    "@decky/rollup": "^1.0.1",
-    "@decky/ui": "^4.8.2",
+    "@decky/rollup": "^1.0.2",
+    "@decky/ui": "^4.11.6",
     "@eslint/js": "^9.15.0",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
@@ -50,7 +50,7 @@
     "typescript-eslint": "^8.16.0"
   },
   "dependencies": {
-    "@decky/api": "^1.1.2",
+    "@decky/api": "^1.1.3",
     "deno": "^2.5.4",
     "localforage": "^1.10.0",
     "qrcode.react": "^4.1.0",

@@ -32,7 +32,14 @@ export default definePlugin(() => {
     }
   )
 
-  const patchedMenu = patchContextMenu(LibraryContextMenu)
+  let patchedMenu: { unpatch: () => void } | null = null
+  try {
+    if (LibraryContextMenu) {
+      patchedMenu = patchContextMenu(LibraryContextMenu)
+    }
+  } catch (e) {
+    console.warn('[GameThemeMusic] Failed to patch context menu:', e)
+  }
 
   const AppStateRegistrar =
     SteamClient.GameSessions.RegisterForAppLifetimeNotifications(

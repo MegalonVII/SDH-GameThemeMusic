@@ -1,17 +1,26 @@
 import asyncio
 import base64
 import datetime
-import glob
 import json
 import os
 import ssl
-from pathlib import Path
-
 import aiohttp
 import certifi
+import logging
+import platform
+import shutil
+from pathlib import Path
 
-import decky  # type: ignore
-from settings import SettingsManager 
+import decky
+from settings import SettingsManager  # type: ignore
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def get_ytdlp_path() -> str:
+    binary = "yt-dlp.exe" if platform.system() == "Windows" else "yt-dlp"
+    return os.path.join(decky.DECKY_PLUGIN_DIR, "bin", binary)
 
 
 class Plugin:
@@ -24,6 +33,7 @@ class Plugin:
     cache_path = f"{decky.DECKY_PLUGIN_RUNTIME_DIR}/cache"
 
     async def _main(self):
+        logger.info("Initializing plugin...")
         self.settings = SettingsManager(
             name="config", settings_directory=decky.DECKY_PLUGIN_SETTINGS_DIR
         )
@@ -39,55 +49,77 @@ class Plugin:
         except Exception as e:
             print(f"Error setting permissions for yt-dlp: {e}")
 
+        logger.info("Settings loaded.")
+
     async def _unload(self):
-        
         if self.yt_process is not None and self.yt_process.returncode is None:
+            logger.info("Terminating yt_process...")
             self.yt_process.terminate()
-            
             async with self.yt_process_lock:
                 try:
-                    
                     await asyncio.wait_for(self.yt_process.communicate(), timeout=5)
                 except TimeoutError:
-                    
+                    logger.warning("yt_process timeout. Killing process.")
                     self.yt_process.kill()
 
     async def set_setting(self, key, value):
+        logger.info(f"Setting config key: {key} = {value}")
         self.settings.setSetting(key, value)
 
     async def get_setting(self, key, default):
-        return self.settings.getSetting(key, default)
+        value = self.settings.getSetting(key, default)
+        logger.info(f"Retrieved config key: {key} = {value}")
+        return value
 
     async def search_yt(self, term: str):
+        logger.info(f"Searching YouTube for: {term}")
+        ytdlp_path = get_ytdlp_path()
+        if os.path.exists(ytdlp_path):
+            os.chmod(ytdlp_path, 0o755)
 
-        
         if self.yt_process is not None and self.yt_process.returncode is None:
+            logger.info("Terminating previous yt_process...")
             self.yt_process.terminate()
-            
-            async with self.yt_process_lock:
-                await self.yt_process.communicate()
-        
+
         try:
             path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp")
             if path.exists():
                 path.chmod(0o755)
         except:
             pass
-
+            
         self.yt_process = await asyncio.create_subprocess_exec(
-            f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp",
-            f"ytsearch50:{term}",
-            "--dump-json",
+            ytdlp_path,
+            f"ytsearch10:{term}",
+            "-j",
+            "-f", "bestaudio",
+            "--match-filters", f"duration<?{20*60}",
             "--flat-playlist",
             "--no-playlist",
             "--no-warnings",
             "--no-check-certificates",
             "--quiet",
             stdout=asyncio.subprocess.PIPE,
-            
+            stderr=asyncio.subprocess.PIPE,
             limit=10 * 1024**2,
-            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/usr/lib64:/lib:/lib64"},
+            env={**os.environ, 'LD_LIBRARY_PATH': '/usr/lib:/lib'},
         )
+        logger.info("yt-dlp search process started.")
+          
+        async with self.yt_process_lock:
+                await self.yt_process.communicate()
+
+        # Log stderr in the background so failures are visible in decky logs
+        async def log_stderr():
+            if not self.yt_process or not self.yt_process.stderr:
+                return
+            while True:
+                line = await self.yt_process.stderr.readline()
+                if not line:
+                    break
+                logger.warning(f"yt-dlp stderr: {line.decode().strip()}")
+
+        asyncio.create_task(log_stderr())
 
     async def next_yt_result(self):
         async with self.yt_process_lock:
@@ -96,9 +128,15 @@ class Plugin:
                 or not (output := self.yt_process.stdout)
                 or not (line := (await output.readline()).strip())
             ):
+                logger.info("No more results from yt_process.")
                 return None
-            entry = json.loads(line)
-            return self.entry_to_info(entry)
+            logger.debug(f"Received result line: {line[:100]}...")
+            try:
+                entry = json.loads(line)
+                return self.entry_to_info(entry)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse yt-dlp output: {e}. Line: {line[:200]}")
+                return None
 
     @staticmethod
     def entry_to_info(entry):
@@ -177,12 +215,10 @@ class Plugin:
             "--quiet",
             "--extractor-args", "youtube:player-client=android,web",
             stdout=asyncio.subprocess.PIPE,
-            env={**os.environ, "LD_LIBRARY_PATH": "/usr/lib:/usr/lib64:/lib:/lib64"},
+            env={**os.environ, 'LD_LIBRARY_PATH': '/usr/lib:/lib'},
         )
-        if (
-            result.stdout is None
-            or len(output := (await result.stdout.read()).strip()) == 0
-        ):
+        if result.stdout is None or not (output := (await result.stdout.read()).strip()):
+            logger.warning("yt-dlp returned no output.")
             return None
         entry = json.loads(output)
         return entry["url"]
@@ -234,38 +270,141 @@ class Plugin:
             err_msg = stderr.decode() if stderr else 'Unknown error'
             raise Exception(f"yt-dlp failed to download: {err_msg}")
 
+        original_path = os.path.join(self.music_path, f"{id}.m4a")
+        renamed_path = os.path.join(self.music_path, f"{id}.webm")
+        if os.path.exists(original_path):
+            logger.info(f"Renaming {original_path} to {renamed_path}")
+            os.rename(original_path, renamed_path)
 
     async def download_url(self, url: str, id: str):
+        logger.info(f"Downloading file from URL: {url}")
         async with aiohttp.ClientSession() as session:
             res = await session.get(url, ssl=self.ssl_context)
             res.raise_for_status()
-            os.makedirs(self.music_path, exist_ok=True)
-            with open(f"{self.music_path}/{id}.webm", "wb") as file:
+            file_path = os.path.join(self.music_path, f"{id}.webm")
+            with open(file_path, "wb") as file:
                 async for chunk in res.content.iter_chunked(1024):
                     file.write(chunk)
+            logger.info(f"Download complete: {file_path}")
 
     async def clear_downloads(self):
-        for file in glob.glob(f"{self.music_path}/*"):
-            if os.path.isfile(file):
-                os.remove(file)
+        logger.info("Clearing all downloaded music files...")
+        try:
+            for file in os.listdir(self.music_path):
+                full_path = os.path.join(self.music_path, file)
+                if os.path.isfile(full_path):
+                    logger.info(f"Removing file: {full_path}")
+                    os.remove(full_path)
+        except FileNotFoundError:
+            logger.warning(f"Music path not found: {self.music_path}")
 
     async def export_cache(self, cache: dict):
         os.makedirs(self.cache_path, exist_ok=True)
         filename = f"backup-{datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}.json"
-        with open(f"{self.cache_path}/{filename}", "w") as file:
+        full_path = os.path.join(self.cache_path, filename)
+        with open(full_path, "w") as file:
             json.dump(cache, file)
+        logger.info(f"Cache exported to {full_path}")
 
     async def list_cache_backups(self):
-        return [
-            file.split("/")[-1].rsplit(".", 1)[0]
-            for file in glob.glob(f"{self.cache_path}/*")
-        ]
+        logger.info("Listing cache backup files...")
+        try:
+            return [
+                file.rsplit(".", 1)[0]
+                for file in os.listdir(self.cache_path)
+                if os.path.isfile(os.path.join(self.cache_path, file))
+            ]
+        except FileNotFoundError:
+            logger.warning(f"Cache path not found: {self.cache_path}")
+            return []
 
     async def import_cache(self, name: str):
-        with open(f"{self.cache_path}/{name}.json", "r") as file:
+        path = os.path.join(self.cache_path, f"{name}.json")
+        logger.info(f"Importing cache from {path}")
+        with open(path, "r") as file:
             return json.load(file)
 
     async def clear_cache(self):
-        for file in glob.glob(f"{self.cache_path}/*"):
-            if os.path.isfile(file):
-                os.remove(file)
+        logger.info("Clearing all cache files...")
+        try:
+            for file in os.listdir(self.cache_path):
+                full_path = os.path.join(self.cache_path, file)
+                if os.path.isfile(full_path):
+                    logger.info(f"Removing file: {full_path}")
+                    os.remove(full_path)
+        except FileNotFoundError:
+            logger.warning(f"Cache path not found: {self.cache_path}")
+
+    async def update_yt_dlp(self):
+        """
+        Updates the yt-dlp binary to the latest version from GitHub releases.
+        Returns a dict with 'success' (bool) and 'message' (str) keys.
+        """
+        try:
+            yt_dlp_path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp")
+            bin_dir = yt_dlp_path.parent
+            
+            bin_dir.mkdir(parents=True, exist_ok=True)
+            
+            async with aiohttp.ClientSession() as session:
+                async with session.get(
+                    "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest",
+                    ssl=self.ssl_context
+                ) as response:
+                    if response.status != 200:
+                        return {
+                            "success": False,
+                            "message": f"Failed to fetch release info: HTTP {response.status}"
+                        }
+                    release_data = await response.json()
+                    tag_name = release_data.get("tag_name", "")
+                
+                assets = release_data.get("assets", [])
+                binary_asset = None
+                for asset in assets:
+                    name = asset.get("name", "")
+                    if name == "yt-dlp":
+                        binary_asset = asset
+                        break
+                
+                if not binary_asset:
+                    return {
+                        "success": False,
+                        "message": "Could not find yt-dlp binary in release assets"
+                    }
+                
+                download_url = binary_asset.get("browser_download_url")
+                if not download_url:
+                    return {
+                        "success": False,
+                        "message": "Could not get download URL"
+                    }
+                
+                async with session.get(download_url, ssl=self.ssl_context) as download_response:
+                    if download_response.status != 200:
+                        return {
+                            "success": False,
+                            "message": f"Failed to download binary: HTTP {download_response.status}"
+                        }
+                    
+                    temp_path = yt_dlp_path.with_suffix(".tmp")
+                    with open(temp_path, "wb") as f:
+                        async for chunk in download_response.content.iter_chunked(8192):
+                            f.write(chunk)
+                    
+                    if yt_dlp_path.exists():
+                        yt_dlp_path.unlink()
+                    temp_path.rename(yt_dlp_path)
+                    
+                    yt_dlp_path.chmod(0o755)
+                    
+                    return {
+                        "success": True,
+                        "message": f"Successfully updated yt-dlp to {tag_name}"
+                    }
+        
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Error updating yt-dlp: {str(e)}"
+            }

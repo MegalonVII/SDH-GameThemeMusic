@@ -90,7 +90,7 @@ class Plugin:
             
         self.yt_process = await asyncio.create_subprocess_exec(
             ytdlp_path,
-            f"ytsearch10:{term}",
+            f"ytsearch50:{term}",
             "-j",
             "-f", "bestaudio",
             "--match-filters", f"duration<?{20*60}",
@@ -105,9 +105,6 @@ class Plugin:
             env={**os.environ, 'LD_LIBRARY_PATH': '/usr/lib:/lib'},
         )
         logger.info("yt-dlp search process started.")
-          
-        async with self.yt_process_lock:
-                await self.yt_process.communicate()
 
         # Log stderr in the background so failures are visible in decky logs
         async def log_stderr():

@@ -5,7 +5,7 @@ Since this is a continuation fork of the original project, I think I'd like to h
 **Remember, this is only a hobby project of mine. I will only work on this in my spare time. Please do not harass me or any other contributors regarding this project or I *will* archive the repository!**
 
 ## Features to Add
-- [ ] Add Windows Support
+- [X] Add Windows Support
 - [ ] Remove Invidious Support
     - From a personal standpoint, I don't think this is worth having. This is just too much of a hassle and requires a constant internet connection, which is not ideal for a device as portable as a Steam Deck.
     - This would mean the plugin only uses YT-DLP.

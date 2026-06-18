@@ -1,4 +1,5 @@
 import { PanelSection } from '@decky/ui'
+
 import useTranslations from '../../hooks/useTranslations'
 import PanelSocialButton from '../settings/socialButton'
 import { SiCrowdin, SiDiscord, SiGithub, SiKofi } from 'react-icons/si'

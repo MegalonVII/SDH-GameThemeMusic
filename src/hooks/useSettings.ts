@@ -7,6 +7,7 @@ export type Settings = {
   downloadAudio: boolean
   invidiousInstance: string
   volume: number
+  musicProvider?: string
 }
 
 export const defaultSettings = {
@@ -14,7 +15,8 @@ export const defaultSettings = {
   useYtDlp: false,
   downloadAudio: false,
   invidiousInstance: 'https://inv.tux.pizza',
-  volume: 1
+  volume: 1,
+  musicProvider: 'youtube'
 }
 
 export const useSettings = () => {
@@ -56,7 +58,6 @@ export const useSettings = () => {
   }
   function setUseYtDlp(value: Settings['useYtDlp']) {
     updateSettings('useYtDlp', value)
-    // Currently, downloads don't work with Invidious, so they can only be enabled iff yt-dlp is enabled.
     updateSettings('downloadAudio', value)
   }
   function setDownloadAudio(value: Settings['downloadAudio']) {
@@ -68,6 +69,9 @@ export const useSettings = () => {
   function setVolume(value: Settings['volume']) {
     updateSettings('volume', value)
   }
+  function setMusicProvider(value: Settings['musicProvider']) {
+    updateSettings('musicProvider', value)
+  }
 
   return {
     settings,
@@ -76,6 +80,7 @@ export const useSettings = () => {
     setDownloadAudio,
     setInvidiousInstance,
     setVolume,
+    setMusicProvider,
     isLoading
   }
 }

@@ -17,7 +17,7 @@ const useThemeMusic = (appId: number) => {
   useEffect(() => {
     let ignore = false
     async function getData() {
-      const resolver = getResolver(settings.useYtDlp)
+      const resolver = getResolver(settings.useYtDlp, settings.musicProvider)
       const cache = await getCache(appId)
       if (cache?.videoId?.length == 0) {
         return setAudio({ videoId: '', audioUrl: '' })

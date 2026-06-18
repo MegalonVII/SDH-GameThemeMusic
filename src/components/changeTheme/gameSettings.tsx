@@ -31,7 +31,7 @@ export default function GameSettings() {
   useEffect(() => {
     async function getData() {
       setLoading(true)
-      const resolver = getResolver(settings.useYtDlp)
+      const resolver = getResolver(settings.useYtDlp, settings.musicProvider)
       const cache = await getCache(parseInt(appid))
       if (typeof cache?.volume === 'number' && isFinite(cache.volume)) {
         setThemeVolume(cache.volume)

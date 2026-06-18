@@ -12,7 +12,7 @@ import { useSettings } from '../../hooks/useSettings'
 export default function ChangeTheme() {
   const [currentTab, setCurrentTab] = useState<string>('change-music-tab')
   const t = useTranslations()
-  const { settings, isLoading: settingsLoading } = useSettings()
+  const { settings, isLoading: settingsLoading, setMusicProvider } = useSettings()
   const { appid } = useParams<{ appid: string }>()
   const appDetails = appStore.GetAppOverviewByGameID(parseInt(appid))
   const appName = appDetails?.display_name?.replace(/(™|®|©)/g, '')
@@ -21,19 +21,39 @@ export default function ChangeTheme() {
     (YouTubeVideoPreview & { isPlaying: boolean })[]
   >([])
   const [loadingNum, setLoadingNum] = useState(0)
-  const initialSearch = appName?.concat(' Theme Music') ?? ''
-  const [searchTerm, setSearchTerm] = useState(initialSearch)
+
+  const getInitialSearch = (provider?: string) => {
+    const p = provider || settings.musicProvider
+    if (p === 'khinsider') return appName ?? ''
+    return appName?.concat(' Theme Music') ?? ''
+  }
+
+  const [searchTerm, setSearchTerm] = useState(getInitialSearch())
+
+  useEffect(() => {
+    if (settingsLoading) return
+
+    const ytDefault = getInitialSearch('youtube')
+    const khDefault = getInitialSearch('khinsider')
+
+    if (settings.musicProvider === 'khinsider' && searchTerm === ytDefault) {
+      setSearchTerm(khDefault)
+    } else if (settings.musicProvider === 'youtube' && searchTerm === khDefault) {
+      setSearchTerm(ytDefault)
+    } else if (!searchTerm) {
+      setSearchTerm(getInitialSearch())
+    }
+  }, [settingsLoading, appName, settings.musicProvider])
+
   useEffect(() => {
     let ignore = false
     async function getData() {
       setLoadingNum((x) => x + 1)
       setVideos([])
-      const resolver = getResolver(settings.useYtDlp)
+      const resolver = getResolver(settings.useYtDlp, settings.musicProvider)
       const res = resolver.getYouTubeSearchResults(searchTerm)
       for await (const video of res) {
-        if (ignore) {
-          break
-        }
+        if (ignore) break
         setVideos((oldVideos) => [...oldVideos, { isPlaying: false, ...video }])
       }
       setLoadingNum((x) => x - 1)
@@ -44,7 +64,7 @@ export default function ChangeTheme() {
     return () => {
       ignore = true
     }
-  }, [searchTerm, settingsLoading])
+  }, [searchTerm, settingsLoading, settings.musicProvider])
 
   function handlePlay(index: number, startPlay: boolean) {
     setVideos((oldVideos) => {
@@ -57,8 +77,9 @@ export default function ChangeTheme() {
   }
 
   function setInitialSearch() {
-    setSearchTerm(initialSearch)
-    return initialSearch
+    const term = getInitialSearch()
+    setSearchTerm(term)
+    return term
   }
 
   return (
@@ -83,6 +104,8 @@ export default function ChangeTheme() {
                 customSearch={setSearchTerm}
                 currentSearch={searchTerm}
                 setInitialSearch={setInitialSearch}
+                settings={settings}
+                setMusicProvider={setMusicProvider}
               />
             ),
             id: 'change-music-tab'

@@ -22,12 +22,12 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: SDH-GameThemeMusic
-          path: SDH-GameThemeMusic
+          path: Game Theme Music
 
       - name: zip/tar release
         run: |
-          zip -r SDH-GameThemeMusic.zip SDH-GameThemeMusic/*
-          tar -czvf SDH-GameThemeMusic.tar.gz SDH-GameThemeMusic
+          zip -r SDH-GameThemeMusic.zip "Game Theme Music"
+          tar -czvf SDH-GameThemeMusic.tar.gz "Game Theme Music"
 
       - name: Create a release
         uses: ncipollo/release-action@v1
@@ -36,4 +36,4 @@ jobs:
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name || github.sha }}
-          name: Release ${{ github.ref_name || github.sha }}
+          name: ${{ github.ref_name || github.sha }}

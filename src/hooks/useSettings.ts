@@ -2,13 +2,11 @@ import { call } from '@decky/api'
 import { useEffect, useState } from 'react'
 
 export type Settings = {
-  defaultMuted: boolean
   volume: number
   musicProvider?: string
 }
 
 export const defaultSettings = {
-  defaultMuted: true,
   volume: 1,
   musicProvider: 'youtube'
 }
@@ -47,9 +45,6 @@ export const useSettings = () => {
     })
   }
 
-  function setDefaultMuted(value: Settings['defaultMuted']) {
-    updateSettings('defaultMuted', value)
-  }
   function setVolume(value: Settings['volume']) {
     updateSettings('volume', value)
   }
@@ -59,7 +54,6 @@ export const useSettings = () => {
 
   return {
     settings,
-    setDefaultMuted,
     setVolume,
     setMusicProvider,
     isLoading

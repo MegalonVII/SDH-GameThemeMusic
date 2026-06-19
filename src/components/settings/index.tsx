@@ -9,8 +9,7 @@ import {
   showContextMenu,
   showModal,
   ShowModalResult,
-  SliderField,
-  ToggleField
+  SliderField
 } from '@decky/ui'
 import { useState } from 'react'
 import { SiCrowdin, SiDiscord, SiGithub, SiKofi } from "react-icons/si";
@@ -20,7 +19,6 @@ import {
   FaDownload,
   FaUndo,
   FaSave,
-  FaVolumeMute,
   FaVolumeUp,
   FaSync,
 } from 'react-icons/fa'
@@ -39,7 +37,6 @@ import PanelSocialButton from './socialButton'
 export default function Index() {
   const {
     settings,
-    setDefaultMuted,
     setVolume,
   } = useSettings()
 
@@ -166,17 +163,6 @@ export default function Index() {
             step={1}
             icon={<FaVolumeUp />}
             editableValue
-          />
-        </PanelSectionRow>
-        <PanelSectionRow>
-          <ToggleField
-            icon={<FaVolumeMute />}
-            checked={settings.defaultMuted}
-            label={t('defaultMuted')}
-            description={t('defaultMutedDescription')}
-            onChange={(newVal: boolean) => {
-              setDefaultMuted(newVal)
-            }}
           />
         </PanelSectionRow>
         <PanelSectionRow>

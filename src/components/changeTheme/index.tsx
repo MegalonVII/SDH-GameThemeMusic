@@ -50,7 +50,7 @@ export default function ChangeTheme() {
     async function getData() {
       setLoadingNum((x) => x + 1)
       setVideos([])
-      const resolver = getResolver(settings.useYtDlp, settings.musicProvider)
+      const resolver = getResolver(settings.musicProvider)
       const res = resolver.getYouTubeSearchResults(searchTerm)
       for await (const video of res) {
         if (ignore) break

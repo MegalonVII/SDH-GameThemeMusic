@@ -62,19 +62,17 @@ export default function ChangePage({
     videoId: string
     audioUrl: string
   }) {
-    if (settings.downloadAudio) {
-      const success = await getResolver(settings.useYtDlp, settings.musicProvider).downloadAudio({
-        id: audio.videoId,
-        url: audio.audioUrl
-      })
-      if (!success) {
-        showModal(
-          <ModalRoot>{t('downloadFailedDetail')}</ModalRoot>,
-          undefined,
-          { strTitle: t('downloadFailed') }
-        )
-        return
-      }
+    const success = await getResolver(settings.musicProvider).downloadAudio({
+      id: audio.videoId,
+      url: audio.audioUrl
+    })
+    if (!success) {
+      showModal(
+        <ModalRoot>{t('downloadFailedDetail')}</ModalRoot>,
+        undefined,
+        { strTitle: t('downloadFailed') }
+      )
+      return
     }
     setSelected(audio.videoId)
     updateCache(parseInt(appid), { videoId: audio.videoId })

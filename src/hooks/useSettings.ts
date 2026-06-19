@@ -3,18 +3,12 @@ import { useEffect, useState } from 'react'
 
 export type Settings = {
   defaultMuted: boolean
-  useYtDlp: boolean
-  downloadAudio: boolean
-  invidiousInstance: string
   volume: number
   musicProvider?: string
 }
 
 export const defaultSettings = {
-  defaultMuted: false,
-  useYtDlp: false,
-  downloadAudio: false,
-  invidiousInstance: 'https://inv.tux.pizza',
+  defaultMuted: true,
   volume: 1,
   musicProvider: 'youtube'
 }
@@ -56,16 +50,6 @@ export const useSettings = () => {
   function setDefaultMuted(value: Settings['defaultMuted']) {
     updateSettings('defaultMuted', value)
   }
-  function setUseYtDlp(value: Settings['useYtDlp']) {
-    updateSettings('useYtDlp', value)
-    updateSettings('downloadAudio', value)
-  }
-  function setDownloadAudio(value: Settings['downloadAudio']) {
-    updateSettings('downloadAudio', value)
-  }
-  function setInvidiousInstance(value: Settings['invidiousInstance']) {
-    updateSettings('invidiousInstance', value)
-  }
   function setVolume(value: Settings['volume']) {
     updateSettings('volume', value)
   }
@@ -76,9 +60,6 @@ export const useSettings = () => {
   return {
     settings,
     setDefaultMuted,
-    setUseYtDlp,
-    setDownloadAudio,
-    setInvidiousInstance,
     setVolume,
     setMusicProvider,
     isLoading

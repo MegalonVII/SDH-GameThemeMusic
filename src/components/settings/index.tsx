@@ -1,7 +1,6 @@
 import {
   ButtonItem,
   ConfirmModal,
-  DropdownItem,
   Menu,
   MenuItem,
   PanelSection,
@@ -10,11 +9,10 @@ import {
   showContextMenu,
   showModal,
   ShowModalResult,
-  SingleDropdownOption,
   SliderField,
   ToggleField
 } from '@decky/ui'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { SiCrowdin, SiDiscord, SiGithub, SiKofi } from "react-icons/si";
 import { useSettings } from '../../hooks/useSettings'
 import useTranslations from '../../hooks/useTranslations'
@@ -24,7 +22,6 @@ import {
   FaSave,
   FaVolumeMute,
   FaVolumeUp,
-  FaYoutube,
   FaSync,
 } from 'react-icons/fa'
 import {
@@ -35,7 +32,6 @@ import {
   importCache,
   listCacheBackups
 } from '../../cache/musicCache'
-import useInvidiousInstances from '../../hooks/useInvidiousInstances'
 import { toaster, call } from '@decky/api'
 import { getResolver } from '../../actions/audio'
 import PanelSocialButton from './socialButton'
@@ -43,29 +39,12 @@ import PanelSocialButton from './socialButton'
 export default function Index() {
   const {
     settings,
-    isLoading: settingsIsLoading,
     setDefaultMuted,
-    setUseYtDlp,
-    setDownloadAudio,
-    setInvidiousInstance,
     setVolume,
-    setMusicProvider
   } = useSettings()
 
   const t = useTranslations()
   const [isUpdatingYtDlp, setIsUpdatingYtDlp] = useState(false)
-
-  const { instances, instancesLoading } = useInvidiousInstances()
-  console.log(instances)
-
-  const instanceOptions = useMemo<SingleDropdownOption[]>(
-    () =>
-      instances.map((ins) => ({
-        data: ins.url,
-        label: ins.name
-      })),
-    [instances]
-  )
 
   const confirmClearCache = () => {
     showModal(
@@ -153,7 +132,7 @@ export default function Index() {
     }
 
     const cached = Object.values(await getFullCache())
-    const resolver = getResolver(settings.useYtDlp)
+    const resolver = getResolver(settings.musicProvider)
 
     for (let index = 0; index < cached.length; index++) {
       const element = cached[index]
@@ -174,19 +153,6 @@ export default function Index() {
   return (
     <div>
       <PanelSection title={t('settings')}>
-        <PanelSectionRow>
-          <DropdownItem
-            label={t('musicProvider')}
-            description={t('musicProviderDescription')}
-            menuLabel={t('musicProvider')}
-            rgOptions={[
-              { data: 'youtube', label: 'YouTube' },
-              { data: 'khinsider', label: 'KHInsider' }
-            ]}
-            selectedOption={settings.musicProvider || 'youtube'}
-            onChange={(newVal) => setMusicProvider(newVal.data)}
-          />
-        </PanelSectionRow>
         <PanelSectionRow>
           <SliderField
             label={t('volume')}
@@ -214,91 +180,46 @@ export default function Index() {
           />
         </PanelSectionRow>
         <PanelSectionRow>
-          <ToggleField
-            icon={<FaYoutube />}
-            checked={settings.useYtDlp}
-            label={t('useYtDlp')}
-            description={t('useYtDlpDescription')}
-            onChange={(newVal: boolean) => {
-              setUseYtDlp(newVal)
-            }}
-          />
-        </PanelSectionRow>
-        {settings.useYtDlp && (
-          <PanelSectionRow>
-            <ButtonItem
-              label={t('updateYtDlpLabel')}
-              description={t('updateYtDlpDescription')}
-              layout="below"
-              disabled={isUpdatingYtDlp}
-              onClick={async () => {
-                setIsUpdatingYtDlp(true)
-                try {
-                  const result = await call<[], { success: boolean; message: string }>(
-                    'update_yt_dlp'
-                  )
-                  if (result.success) {
-                    toaster.toast({
-                      title: t('updateYtDlpSuccess'),
-                      body: result.message,
-                      icon: <FaSync />,
-                      duration: 3000
-                    })
-                  } else {
-                    toaster.toast({
-                      title: t('updateYtDlpFailed'),
-                      body: result.message,
-                      icon: <FaSync />,
-                      duration: 5000
-                    })
-                  }
-                } catch (error) {
+          <ButtonItem
+            label={t('updateYtDlpLabel')}
+            description={t('updateYtDlpDescription')}
+            layout="below"
+            disabled={isUpdatingYtDlp}
+            onClick={async () => {
+              setIsUpdatingYtDlp(true)
+              try {
+                const result = await call<[], { success: boolean; message: string }>(
+                  'update_yt_dlp'
+                )
+                if (result.success) {
+                  toaster.toast({
+                    title: t('updateYtDlpSuccess'),
+                    body: result.message,
+                    icon: <FaSync />,
+                    duration: 3000
+                  })
+                } else {
                   toaster.toast({
                     title: t('updateYtDlpFailed'),
-                    body: error instanceof Error ? error.message : String(error),
+                    body: result.message,
                     icon: <FaSync />,
                     duration: 5000
                   })
-                } finally {
-                  setIsUpdatingYtDlp(false)
                 }
-              }}
-            >
-              {isUpdatingYtDlp ? t('updating') : t('updateYtDlp')}
-            </ButtonItem>
-          </PanelSectionRow>
-        )}
-        {!settings.useYtDlp && (
-          <PanelSectionRow>
-            <DropdownItem
-              disabled={
-                instancesLoading ||
-                !instanceOptions?.length ||
-                settingsIsLoading
+              } catch (error) {
+                toaster.toast({
+                  title: t('updateYtDlpFailed'),
+                  body: error instanceof Error ? error.message : String(error),
+                  icon: <FaSync />,
+                  duration: 5000
+                })
+              } finally {
+                setIsUpdatingYtDlp(false)
               }
-              label={t('invidiousInstance')}
-              description={t('invidiousInstanceDescription')}
-              menuLabel={t('invidiousInstance')}
-              rgOptions={instanceOptions}
-              selectedOption={
-                instanceOptions.find(
-                  (o) => o.data === settings.invidiousInstance
-                )?.data
-              }
-              onChange={(newVal) => setInvidiousInstance(newVal.data)}
-            />
-          </PanelSectionRow>
-        )}
-        <PanelSectionRow>
-          <ToggleField
-            icon={<FaDownload />}
-            checked={settings.downloadAudio}
-            label={t('downloadAudio')}
-            description={t('downloadAudioDescription')}
-            onChange={(newVal: boolean) => {
-              setDownloadAudio(newVal)
             }}
-          ></ToggleField>
+          >
+            {isUpdatingYtDlp ? t('updating') : t('updateYtDlp')}
+          </ButtonItem>
         </PanelSectionRow>
         <PanelSectionRow>
           <ButtonItem

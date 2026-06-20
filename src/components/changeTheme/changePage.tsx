@@ -15,7 +15,7 @@ import { Settings } from '../../hooks/useSettings'
 import AudioPlayer from './audioPlayer'
 import { getCache, updateCache } from '../../cache/musicCache'
 import useTranslations from '../../hooks/useTranslations'
-import { YouTubeVideoPreview } from '../../../types/YouTube'
+import { MediaContentPreview } from 'types/media'
 import NoMusic from './noMusic'
 import { getResolver } from '../../actions/audio'
 
@@ -29,7 +29,7 @@ export default function ChangePage({
   settings,
   setMusicProvider
 }: {
-  videos: (YouTubeVideoPreview & { isPlaying: boolean })[]
+  videos: (MediaContentPreview & { isPlaying: boolean })[]
   loading: boolean
   handlePlay: (idx: number, startPlaying: boolean) => void
   customSearch: (term: string) => void

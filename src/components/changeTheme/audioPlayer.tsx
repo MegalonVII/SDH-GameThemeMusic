@@ -39,7 +39,7 @@ export default function AudioPlayer({
     if (audioUrl?.length && !audioUrl.includes('youtube.com') && !audioUrl.includes('youtu.be')) return audioUrl
     setLoading(true)
     try {
-      const resolver = getResolver(settings.useYtDlp, settings.musicProvider)
+      const resolver = getResolver(settings.musicProvider)
       const res = await resolver.getAudioUrlFromVideo(video)
       setAudio(res)
       setLoading(false)
@@ -170,11 +170,7 @@ export default function AudioPlayer({
                 focusable={!selected && !loading}
                 onClick={selectAudio}
               >
-                {selected
-                  ? t('selected')
-                  : settings.downloadAudio
-                    ? t('download')
-                    : t('select')}
+                {selected ? t('selected') : t('download')}
               </DialogButton>
               {selected ? (
                 <div

@@ -273,17 +273,6 @@ class Plugin:
             logger.info(f"Renaming {original_path} to {renamed_path}")
             os.rename(original_path, renamed_path)
 
-    async def download_url(self, url: str, id: str):
-        logger.info(f"Downloading file from URL: {url}")
-        async with aiohttp.ClientSession() as session:
-            res = await session.get(url, ssl=self.ssl_context)
-            res.raise_for_status()
-            file_path = os.path.join(self.music_path, f"{id}.webm")
-            with open(file_path, "wb") as file:
-                async for chunk in res.content.iter_chunked(1024):
-                    file.write(chunk)
-            logger.info(f"Download complete: {file_path}")
-
     async def clear_downloads(self):
         logger.info("Clearing all downloaded music files...")
         try:

@@ -130,13 +130,13 @@ export default function AudioPlayer({
           gridTemplateRows: 'max-content max-content max-content',
           overflow: 'hidden',
           padding: '10px',
-          width: '230px'
+          width: '170px'
         }}
       >
         <div
           style={{
             position: 'relative',
-            width: '230px',
+            width: '170px',
             height: 0,
             paddingBottom: '56.25%',
             overflow: 'hidden'
@@ -147,7 +147,7 @@ export default function AudioPlayer({
             alt={video.title}
             style={{
               overflow: 'hidden',
-              width: '230px',
+              width: '170px',
               borderRadius: '6px',
               position: 'absolute',
               top: '50%',
@@ -162,7 +162,7 @@ export default function AudioPlayer({
             color: 'var(--main-editor-text-color)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            width: '230px',
+            width: '170px',
             height: '68px'
           }}
         >
@@ -174,7 +174,7 @@ export default function AudioPlayer({
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
-            width: '230px'
+            width: '170px'
           }}
         >
           <DialogButton

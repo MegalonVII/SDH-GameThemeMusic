@@ -141,11 +141,10 @@ export default function ChangePage({
         <>
           <Focusable
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 170px)',
               gap: '10px',
-              flexDirection: 'row'
+              justifyContent: 'center'
             }}
           >
             <NoMusic
@@ -164,7 +163,11 @@ export default function ChangePage({
                 selectNewAudio={selectNewAudio}
               />
             ))}
-            {loading && <SteamSpinner />}
+            {loading && (
+              <div style={{ gridColumn: '1 / -1', justifySelf: 'center' }}>
+                <SteamSpinner />
+              </div>
+            )}
           </Focusable>
         </>
       )}

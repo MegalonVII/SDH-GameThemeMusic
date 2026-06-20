@@ -5,11 +5,11 @@ import {
   ModalRoot,
   PanelSection,
   PanelSectionRow,
-  SteamSpinner,
   TextField,
   showModal,
   useParams
 } from '@decky/ui'
+import SteamSpinner from '../steamSpinner'
 import { useEffect, useState } from 'react'
 import { Settings } from '../../hooks/useSettings'
 import AudioPlayer from './audioPlayer'

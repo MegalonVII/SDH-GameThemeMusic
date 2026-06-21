@@ -287,11 +287,20 @@ class Plugin:
 
     async def download_url(self, url: str, id: str):
         logger.info(f"Downloading file from URL: {url}")
-        
+
+        safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', id)
+        ext = url.rsplit('.', 1)[-1].lower()
+        if ext not in ['mp3', 'ogg', 'flac', 'm4a', 'wav', 'aac', 'opus', 'webm', 'mp4']:
+            ext = 'webm'
+
         async with aiohttp.ClientSession() as session:
-            res = await session.get(url, ssl=self.ssl_context)
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Referer': 'https://downloads.khinsider.com/'
+            }
+            res = await session.get(url, headers=headers, ssl=self.ssl_context)
             res.raise_for_status()
-            file_path = os.path.join(self.music_path, f"{id}.webm")
+            file_path = os.path.join(self.music_path, f"{safe_id}.{ext}")
             with open(file_path, "wb") as file:
                 async for chunk in res.content.iter_chunked(1024):
                     file.write(chunk)

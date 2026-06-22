@@ -62,6 +62,12 @@ export default function ChangePage({
     videoId: string
     audioUrl: string
   }) {
+    if (!audio.videoId.length) {
+      setSelected(audio.videoId)
+      updateCache(parseInt(appid), { videoId: audio.videoId })
+      return
+    }
+
     const success = await getResolver(settings.musicProvider).downloadAudio({
       id: audio.videoId,
       url: audio.audioUrl

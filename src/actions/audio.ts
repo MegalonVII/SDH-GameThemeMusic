@@ -9,6 +9,7 @@ abstract class AudioResolver {
     video: MediaContent
   ): Promise<string | undefined>
   abstract downloadAudio(video: MediaContent): Promise<boolean>
+  abstract isDownloaded(video: MediaContent): Promise<boolean>
 
   async getAudio(
     appName: string
@@ -62,6 +63,10 @@ class YtDlpAudioResolver extends AudioResolver {
       console.error(e)
       return false
     }
+  }
+
+  async isDownloaded(video: MediaContent): Promise<boolean> {
+    return await call<[string], boolean>('local_audio_exists', video.id)
   }
 }
 
@@ -228,14 +233,23 @@ class KhinsiderAudioResolver extends AudioResolver {
 
   async downloadAudio(video: MediaContent): Promise<boolean> {
     try {
+      const downloaded = await this.isDownloaded(video)
+      if (downloaded) return true
+
       const url = await this.getAudioUrlFromVideo(video)
       if (!url) return false
+      if (url.startsWith('data:')) return true
+
       await call<[string, string]>('download_url', url, video.id)
       return true
     } catch (e) {
       console.error(e)
       return false
     }
+  }
+
+  async isDownloaded(video: MediaContent): Promise<boolean> {
+    return await call<[string], boolean>('local_audio_exists', video.id)
   }
 }
 

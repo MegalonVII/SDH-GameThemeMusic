@@ -28,6 +28,7 @@ export default function AudioPlayer({
   const t = useTranslations()
   const [fetching, setFetching] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [downloaded, setDownloaded] = useState(selected)
   const [audioUrl, setAudio] = useState<string | undefined>(
     video.url && !video.url.includes('youtube.com') && !video.url.includes('youtu.be') ? video.url : undefined
   )
@@ -41,6 +42,19 @@ export default function AudioPlayer({
   useEffect(() => {
     setIsPlaying(video.isPlaying)
   }, [video.isPlaying])
+
+  useEffect(() => {
+    let ignore = false
+    async function getDownloaded() {
+      const resolver = getResolver(settings.musicProvider)
+      const result = selected || await resolver.isDownloaded(video)
+      if (!ignore) setDownloaded(result)
+    }
+    getDownloaded()
+    return () => {
+      ignore = true
+    }
+  }, [selected, settings.musicProvider, video.id])
 
   async function getUrl() {
     if (audioUrl?.length && !audioUrl.includes('youtube.com') && !audioUrl.includes('youtu.be')) return audioUrl
@@ -114,6 +128,7 @@ export default function AudioPlayer({
         videoId: video.id,
         audioUrl: url
       })
+      setDownloaded(true)
     } finally {
       setFetching(false)
       setDownloading(false)
@@ -192,11 +207,13 @@ export default function AudioPlayer({
             >
               {selected
                 ? t('selected')
+                : downloaded
+                  ? t('select')
                 : downloading
                   ? t('downloading')
                   : t('download')}
             </DialogButton>
-            {selected ? (
+            {selected || downloaded ? (
               <div
                 style={{
                   height: '20px',

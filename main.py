@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def mk_audio_filename(id: str) -> str:
+def get_audio_filename(id: str) -> str:
     if id.startswith("https://"):
         return hashlib.md5(id.encode()).hexdigest()
     return id
@@ -165,9 +165,9 @@ class Plugin:
             return ""
 
     def local_match(self, id: str) -> str | None:
-        safe_id = glob.escape(id)
+        filename = glob.escape(id)
         local_matches = [
-            x for x in glob.glob(f"{self.music_path}/{safe_id}.*")
+            x for x in glob.glob(f"{self.music_path}/{filename}.*")
             if os.path.isfile(x) and x.rsplit('.', 1)[-1].lower() in ['webm', 'm4a', 'mp3', 'ogg', 'wav', 'aac', 'flac', 'opus', 'weba', 'mp4']
         ]
         if len(local_matches) == 0:
@@ -176,8 +176,8 @@ class Plugin:
         return local_matches[0]
 
     async def local_audio_url(self, id: str):
-        safe_id = mk_audio_filename(id)
-        local_match = self.local_match(safe_id)
+        filename = get_audio_filename(id)
+        local_match = self.local_match(filename)
         if local_match is None:
             return None
 
@@ -200,14 +200,18 @@ class Plugin:
         with open(local_match, "rb") as file:
             return f"data:{mime_type};base64,{base64.b64encode(file.read()).decode()}"
 
+    async def local_audio_exists(self, id: str):
+        filename = get_audio_filename(id)
+        return self.local_match(filename) is not None
+
     async def single_yt_url(self, id: str):
         if id.startswith("https://"):
             url = id
         else:
             url = f"https://www.youtube.com/watch?v={id}"
 
-        safe_id = mk_audio_filename(id)
-        local_match = self.local_match(safe_id)
+        filename = get_audio_filename(id)
+        local_match = self.local_match(filename)
 
         if local_match is not None:
             file_size = os.path.getsize(local_match)
@@ -254,8 +258,8 @@ class Plugin:
         else:
             url = f"https://www.youtube.com/watch?v={id}"
 
-        safe_id = mk_audio_filename(id)
-        if self.local_match(safe_id) is not None:
+        filename = get_audio_filename(id)
+        if self.local_match(filename) is not None:
             return
 
         has_ffmpeg = shutil.which("ffmpeg") is not None
@@ -268,7 +272,7 @@ class Plugin:
                 "--audio-format", "mp3",
                 "--audio-quality", "128K",
                 "-o",
-                f"{safe_id}.%(ext)s",
+                f"{filename}.%(ext)s",
                 "-P",
                 self.music_path,
                 "--no-playlist",
@@ -286,7 +290,7 @@ class Plugin:
                 "-f",
                 "bestaudio[protocol^=http][protocol!*=m3u8]/bestaudio/best",
                 "-o",
-                f"{safe_id}.%(ext)s",
+                f"{filename}.%(ext)s",
                 "-P",
                 self.music_path,
                 "--no-playlist",
@@ -303,22 +307,26 @@ class Plugin:
             raise Exception(f"yt-dlp failed to download: {err_msg}")
 
         if not has_ffmpeg:
-            original_path = os.path.join(self.music_path, f"{safe_id}.m4a")
-            renamed_path = os.path.join(self.music_path, f"{safe_id}.webm")
+            original_path = os.path.join(self.music_path, f"{filename}.m4a")
+            renamed_path = os.path.join(self.music_path, f"{filename}.webm")
             if os.path.exists(original_path):
                 logger.info(f"Renaming {original_path} to {renamed_path}")
                 os.rename(original_path, renamed_path)
 
-        local_file = self.local_match(safe_id)
+        local_file = self.local_match(filename)
         if local_file is not None:
             logger.info(f"Downloaded audio: {local_file} ({os.path.getsize(local_file)} bytes), ffmpeg={has_ffmpeg}")
         else:
-            logger.warning(f"Download completed but no output file found for {safe_id}")
+            logger.warning(f"Download completed but no output file found for {filename}")
 
     async def download_url(self, url: str, id: str):
         logger.info(f"Downloading file from URL: {url} for id {id}")
 
-        safe_id = mk_audio_filename(id)
+        if url.startswith("data:"):
+            logger.info("Skipping download because URL is already local audio data")
+            return
+
+        filename = get_audio_filename(id)
         ext = url.rsplit('.', 1)[-1].lower()
         if ext not in ['mp3', 'ogg', 'flac', 'm4a', 'wav', 'aac', 'opus', 'webm', 'mp4']:
             ext = 'webm'
@@ -332,7 +340,7 @@ class Plugin:
                 res = await session.get(url, headers=headers, ssl=self.ssl_context)
                 logger.info(f"download_url response status: {res.status}, content-type: {res.headers.get('content-type')}")
                 res.raise_for_status()
-                file_path = os.path.join(self.music_path, f"{safe_id}.{ext}")
+                file_path = os.path.join(self.music_path, f"{filename}.{ext}")
                 with open(file_path, "wb") as file:
                     async for chunk in res.content.iter_chunked(1024):
                         file.write(chunk)

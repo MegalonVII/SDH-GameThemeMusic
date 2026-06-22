@@ -1,20 +1,41 @@
 name: Release Game Theme Music
 
 on:
-  push:
-    tags:
-      - 'v*'
-  pull_request:
-    branches: ['main']
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        name: Read version from package.json
+        run: |
+          TAG=$(node -p "require('./package.json').version")
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Release tag: ${TAG}"
+
+      - name: Fail if tag already exists
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1; then
+            echo "::error::Tag ${TAG} already exists. Bump version in package.json before releasing."
+            exit 1
+          fi
+
   build:
+    needs: prepare
     uses: ./.github/workflows/build.yml
 
   release:
-    needs: build
-    if: github.event_name == 'workflow_dispatch'
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +54,7 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: 'SDH-GameThemeMusic.zip,SDH-GameThemeMusic.tar.gz'
-          allowUpdates: true
+          allowUpdates: false
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref_name || github.sha }}
-          name: ${{ github.ref_name || github.sha }}
+          tag: ${{ needs.prepare.outputs.tag }}
+          name: ${{ needs.prepare.outputs.tag }}

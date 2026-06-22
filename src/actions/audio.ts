@@ -186,6 +186,9 @@ class KhinsiderAudioResolver extends AudioResolver {
   }
 
   async getAudioUrlFromVideo(video: MediaContent): Promise<string | undefined> {
+    const localUrl = await call<[string], string | null>('local_audio_url', video.id)
+    if (localUrl) return localUrl
+
     try {
       const html = await call<[string], string>('fetch_url', video.id)
       if (!html) return undefined

@@ -2,9 +2,9 @@ import asyncio
 import base64
 import datetime
 import glob
+import hashlib
 import json
 import os
-import re
 import ssl
 import aiohttp
 import certifi
@@ -18,6 +18,12 @@ from settings import SettingsManager  # type: ignore
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def mk_audio_filename(id: str) -> str:
+    if id.startswith("https://"):
+        return hashlib.md5(id.encode()).hexdigest()
+    return id
 
 
 def get_ytdlp_path() -> str:
@@ -169,15 +175,40 @@ class Plugin:
 
         return local_matches[0]
 
+    async def local_audio_url(self, id: str):
+        safe_id = mk_audio_filename(id)
+        local_match = self.local_match(safe_id)
+        if local_match is None:
+            return None
+
+        file_size = os.path.getsize(local_match)
+        extension = local_match.rsplit(".", 1)[-1].lower()
+        mime_types = {
+            "m4a": "audio/mp4",
+            "mp3": "audio/mpeg",
+            "webm": "audio/webm",
+            "ogg": "audio/ogg",
+            "wav": "audio/wav",
+            "aac": "audio/aac",
+            "flac": "audio/flac",
+            "opus": "audio/ogg",
+            "weba": "audio/webm",
+            "mp4": "audio/mp4"
+        }
+        mime_type = mime_types.get(extension, "audio/webm")
+        logger.info(f"Serving local audio as base64: {local_match} ({file_size} bytes)")
+        with open(local_match, "rb") as file:
+            return f"data:{mime_type};base64,{base64.b64encode(file.read()).decode()}"
+
     async def single_yt_url(self, id: str):
         if id.startswith("https://"):
             url = id
-            safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', id.split('/')[-1])
         else:
             url = f"https://www.youtube.com/watch?v={id}"
-            safe_id = id
-            
+
+        safe_id = mk_audio_filename(id)
         local_match = self.local_match(safe_id)
+
         if local_match is not None:
             file_size = os.path.getsize(local_match)
             extension = local_match.rsplit(".", 1)[-1].lower()
@@ -220,11 +251,10 @@ class Plugin:
     async def download_yt_audio(self, id: str):
         if id.startswith("https://"):
             url = id
-            safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', id.split('/')[-1])
         else:
             url = f"https://www.youtube.com/watch?v={id}"
-            safe_id = id
 
+        safe_id = mk_audio_filename(id)
         if self.local_match(safe_id) is not None:
             return
 
@@ -286,25 +316,30 @@ class Plugin:
             logger.warning(f"Download completed but no output file found for {safe_id}")
 
     async def download_url(self, url: str, id: str):
-        logger.info(f"Downloading file from URL: {url}")
+        logger.info(f"Downloading file from URL: {url} for id {id}")
 
-        safe_id = re.sub(r'[^a-zA-Z0-9_\-]', '_', id)
+        safe_id = mk_audio_filename(id)
         ext = url.rsplit('.', 1)[-1].lower()
         if ext not in ['mp3', 'ogg', 'flac', 'm4a', 'wav', 'aac', 'opus', 'webm', 'mp4']:
             ext = 'webm'
 
-        async with aiohttp.ClientSession() as session:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                'Referer': 'https://downloads.khinsider.com/'
-            }
-            res = await session.get(url, headers=headers, ssl=self.ssl_context)
-            res.raise_for_status()
-            file_path = os.path.join(self.music_path, f"{safe_id}.{ext}")
-            with open(file_path, "wb") as file:
-                async for chunk in res.content.iter_chunked(1024):
-                    file.write(chunk)
-            logger.info(f"Download complete: {file_path}")
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                    'Referer': id if id.startswith('https://') else 'https://downloads.khinsider.com/'
+                }
+                res = await session.get(url, headers=headers, ssl=self.ssl_context)
+                logger.info(f"download_url response status: {res.status}, content-type: {res.headers.get('content-type')}")
+                res.raise_for_status()
+                file_path = os.path.join(self.music_path, f"{safe_id}.{ext}")
+                with open(file_path, "wb") as file:
+                    async for chunk in res.content.iter_chunked(1024):
+                        file.write(chunk)
+                logger.info(f"Download complete: {file_path}")
+        except Exception as e:
+            logger.error(f"download_url failed for {url}: {e}")
+            raise
 
     async def clear_downloads(self):
         logger.info("Clearing all downloaded music files...")

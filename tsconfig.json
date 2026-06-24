@@ -8,6 +8,7 @@
     "jsxFragmentFactory": "window.SP_REACT.Fragment",
     "declaration": false,
     "moduleResolution": "node",
+    "baseUrl": ".",
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "esModuleInterop": true,

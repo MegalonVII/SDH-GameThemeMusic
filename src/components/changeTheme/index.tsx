@@ -5,7 +5,7 @@ import useTranslations from '../../hooks/useTranslations'
 import ChangePage from './changePage'
 import AboutPage from './aboutPage'
 import { getResolver } from '../../actions/audio'
-import { YouTubeVideoPreview } from '../../../types/YouTube'
+import { MediaContentPreview } from 'types/media'
 import GameSettings from './gameSettings'
 import { useSettings } from '../../hooks/useSettings'
 
@@ -18,7 +18,7 @@ export default function ChangeTheme() {
   const appName = appDetails?.display_name?.replace(/(™|®|©)/g, '')
 
   const [videos, setVideos] = useState<
-    (YouTubeVideoPreview & { isPlaying: boolean })[]
+    (MediaContentPreview & { isPlaying: boolean })[]
   >([])
   const [loadingNum, setLoadingNum] = useState(0)
 

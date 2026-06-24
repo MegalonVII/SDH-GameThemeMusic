@@ -22,17 +22,17 @@ export default function NoMusic({
           background: 'var(--main-editor-bg-color)',
           borderRadius: '6px',
           display: 'grid',
-          gridTemplateRows: '129px max-content max-content',
+          gridTemplateRows: '95px max-content max-content',
           overflow: 'hidden',
           padding: '10px',
-          width: '230px'
+          width: '170px'
         }}
       >
         <div
           style={{
             overflow: 'hidden',
-            width: '230px',
-            height: '129px',
+            width: '170px',
+            height: '95px',
             borderRadius: '6px',
             display: 'flex',
             justifyContent: 'center',
@@ -46,7 +46,7 @@ export default function NoMusic({
             color: 'var(--main-editor-text-color)',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            width: '230px',
+            width: '170px',
             height: '68px'
           }}
         >
@@ -58,7 +58,7 @@ export default function NoMusic({
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
-            width: '230px'
+            width: '170px'
           }}
         >
           <DialogButton disabled={true} focusable={false}>

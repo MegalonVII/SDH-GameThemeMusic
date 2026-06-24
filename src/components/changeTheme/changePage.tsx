@@ -5,17 +5,17 @@ import {
   ModalRoot,
   PanelSection,
   PanelSectionRow,
-  SteamSpinner,
   TextField,
   showModal,
   useParams
 } from '@decky/ui'
+import SteamSpinner from '../steamSpinner'
 import { useEffect, useState } from 'react'
 import { Settings } from '../../hooks/useSettings'
 import AudioPlayer from './audioPlayer'
 import { getCache, updateCache } from '../../cache/musicCache'
 import useTranslations from '../../hooks/useTranslations'
-import { YouTubeVideoPreview } from '../../../types/YouTube'
+import { MediaContentPreview } from 'types/media'
 import NoMusic from './noMusic'
 import { getResolver } from '../../actions/audio'
 
@@ -29,7 +29,7 @@ export default function ChangePage({
   settings,
   setMusicProvider
 }: {
-  videos: (YouTubeVideoPreview & { isPlaying: boolean })[]
+  videos: (MediaContentPreview & { isPlaying: boolean })[]
   loading: boolean
   handlePlay: (idx: number, startPlaying: boolean) => void
   customSearch: (term: string) => void
@@ -62,6 +62,12 @@ export default function ChangePage({
     videoId: string
     audioUrl: string
   }) {
+    if (!audio.videoId.length) {
+      setSelected(audio.videoId)
+      updateCache(parseInt(appid), { videoId: audio.videoId })
+      return
+    }
+
     const success = await getResolver(settings.musicProvider).downloadAudio({
       id: audio.videoId,
       url: audio.audioUrl
@@ -141,11 +147,10 @@ export default function ChangePage({
         <>
           <Focusable
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, 170px)',
               gap: '10px',
-              flexDirection: 'row'
+              justifyContent: 'center'
             }}
           >
             <NoMusic
@@ -164,7 +169,11 @@ export default function ChangePage({
                 selectNewAudio={selectNewAudio}
               />
             ))}
-            {loading && <SteamSpinner />}
+            {loading && (
+              <div style={{ gridColumn: '1 / -1', justifySelf: 'center' }}>
+                <SteamSpinner />
+              </div>
+            )}
           </Focusable>
         </>
       )}

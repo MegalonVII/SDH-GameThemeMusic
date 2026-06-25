@@ -190,6 +190,13 @@ class KhinsiderAudioResolver extends AudioResolver {
     }
   }
 
+  private resolveDownloadHref(href: string | null): string | undefined {
+    if (!href || !/\.(mp3|ogg|flac|m4a|wav|aac|opus)$/i.test(href)) return undefined
+    return href.startsWith('http')
+      ? href
+      : `https://downloads.khinsider.com${href}`
+  }
+
   async getAudioUrlFromVideo(video: MediaContent): Promise<string | undefined> {
     const localUrl = await call<[string], string | null>('local_audio_url', video.id)
     if (localUrl) return localUrl
@@ -213,15 +220,15 @@ class KhinsiderAudioResolver extends AudioResolver {
         }
       }
 
-      // Fallback: look for direct audio links
-      const links = doc.querySelectorAll('a')
-      for (const link of links) {
-        const href = link.getAttribute('href')
-        if (href && /\.(mp3|ogg|flac|m4a|wav|aac|opus)$/i.test(href)) {
-          return href.startsWith('http')
-            ? href
-            : `https://downloads.khinsider.com${href}`
-        }
+      const downloadLink = doc.querySelector('a .songDownloadLink')?.closest('a')
+      const downloadHref = this.resolveDownloadHref(
+        downloadLink?.getAttribute('href') ?? null
+      )
+      if (downloadHref) return downloadHref
+
+      for (const link of doc.querySelectorAll('a')) {
+        const href = this.resolveDownloadHref(link.getAttribute('href'))
+        if (href) return href
       }
 
       return undefined
@@ -258,4 +265,23 @@ export function getResolver(provider?: string): AudioResolver {
     return new KhinsiderAudioResolver()
   }
   return new YtDlpAudioResolver()
+}
+
+export function getResolverForMediaId(
+  id: string,
+  fallbackProvider?: string
+): AudioResolver {
+  if (
+    id.startsWith('https://downloads.khinsider.com/') ||
+    id.startsWith('http://downloads.khinsider.com/')
+  ) {
+    return new KhinsiderAudioResolver()
+  }
+  if (id.includes('youtube.com') || id.includes('youtu.be')) {
+    return new YtDlpAudioResolver()
+  }
+  if (id.startsWith('https://') || id.startsWith('http://')) {
+    return new KhinsiderAudioResolver()
+  }
+  return getResolver(fallbackProvider)
 }

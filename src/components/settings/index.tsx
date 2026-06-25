@@ -31,7 +31,7 @@ import {
   listCacheBackups
 } from '../../cache/musicCache'
 import { toaster, call } from '@decky/api'
-import { getResolver } from '../../actions/audio'
+import { getResolverForMediaId } from '../../actions/audio'
 import PanelSocialButton from './socialButton'
 
 export default function Index() {
@@ -63,7 +63,9 @@ export default function Index() {
   }
 
   const confirmRestoreDownloads = async () => {
-    const num = Object.values(await getFullCache()).length
+    const num = Object.values(await getFullCache()).filter(
+      (entry) => entry.videoId?.length
+    ).length
     const modal = showModal(
       <ConfirmModal
         strTitle={t('restoreDownloadsConfirm')}
@@ -128,23 +130,57 @@ export default function Index() {
       )
     }
 
-    const cached = Object.values(await getFullCache())
-    const resolver = getResolver(settings.musicProvider)
+    const cached = Object.values(await getFullCache()).filter(
+      (entry) => entry.videoId?.length
+    )
+
+    let restored = 0
+    let failed = 0
+    let skipped = 0
 
     for (let index = 0; index < cached.length; index++) {
       const element = cached[index]
-      if (element.videoId !== undefined) {
-        modal.Update(getProgressModal(index, cached.length))
-        await resolver.downloadAudio({ id: element.videoId })
+      const videoId = element.videoId as string
+      const resolver = getResolverForMediaId(videoId, settings.musicProvider)
+
+      modal.Update(getProgressModal(index, cached.length))
+
+      if (await resolver.isDownloaded({ id: videoId })) {
+        skipped++
+        continue
+      }
+
+      const success = await resolver.downloadAudio({ id: videoId })
+      if (success) {
+        restored++
+      } else {
+        failed++
       }
     }
     modal.Close()
-    toaster.toast({
-      title: t('downloadRestoreSuccessful'),
-      body: t('downloadRestoreSuccessfulDetails'),
-      icon: <FaDownload />,
-      duration: 1500
-    })
+
+    if (failed > 0) {
+      toaster.toast({
+        title: t('downloadFailed'),
+        body: t('downloadFailedDetail'),
+        icon: <FaDownload />,
+        duration: 3000
+      })
+    } else if (restored > 0) {
+      toaster.toast({
+        title: t('downloadRestoreSuccessful'),
+        body: t('downloadRestoreSuccessfulDetails'),
+        icon: <FaDownload />,
+        duration: 1500
+      })
+    } else if (skipped > 0) {
+      toaster.toast({
+        title: t('downloadRestoreSuccessful'),
+        body: t('downloadRestoreSuccessfulDetails'),
+        icon: <FaDownload />,
+        duration: 1500
+      })
+    }
   }
 
   return (

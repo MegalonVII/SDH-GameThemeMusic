@@ -1,0 +1,66 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to improve Game Theme Music? Describe the problem you are trying to solve and how you would like it to work.
+
+        Check [ROADMAP.md](https://github.com/MegalonVII/SDH-GameThemeMusic/blob/main/ROADMAP.md) first. Your idea may already be planned!
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this solve, or what workflow is frustrating today?
+      placeholder: e.g. I want music to stop automatically when I launch a game.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature or change you would like to see.
+      placeholder: e.g. Add a setting to pause theme music while a game is running.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you thought about?
+      placeholder: e.g. I tried muting globally but that affects all games.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Who would benefit?
+      options:
+        - Most users
+        - Power users / tinkerers
+        - Non-Steam game users
+        - AudioLoader users
+        - Localization / accessibility
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Mockups, links to similar features in other plugins, or related issues.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and the roadmap to avoid duplicates.
+          required: true
+        - label: I understand this is a hobby project maintained in spare time.
+          required: true

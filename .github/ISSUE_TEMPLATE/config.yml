@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discord Support
+    url: https://deckbrew.xyz/discord
+    about: Ask questions or get help in the Steam Deck Homebrew Discord
+  - name: Translation Requests
+    url: https://crowdin.com/project/sdh-gamethememusic
+    about: Contribute or request translations via Crowdin (not GitHub issues)

@@ -1,0 +1,81 @@
+name: Wrong Theme Music
+description: The plugin picked the wrong song for a game
+title: "[Wrong Music]: "
+labels: ["wrong-music"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report when Game Theme Music plays an incorrect track for a game.
+
+        If you know the correct song, include a link. This makes fixes much easier.
+
+  - type: input
+    id: game
+    attributes:
+      label: Game name (as shown in Steam / your library)
+      placeholder: e.g. Cyberpunk 2077
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game-type
+    attributes:
+      label: Game type
+      options:
+        - Steam game
+        - Non-Steam game
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: wrong-track
+    attributes:
+      label: What played instead?
+      description: Song title, artist, or what you heard. A YouTube / KHInsider link is ideal.
+      placeholder: e.g. "Main Theme" from a different game, or a random cover/remix
+    validations:
+      required: true
+
+  - type: textarea
+    id: correct-track
+    attributes:
+      label: What should play?
+      description: The theme or track you expected. Links strongly preferred.
+      placeholder: e.g. https://www.youtube.com/watch?v=... or KHInsider URL
+    validations:
+      required: true
+
+  - type: dropdown
+    id: custom-override
+    attributes:
+      label: Did you set a custom song via the context menu?
+      options:
+        - "No, using automatic selection"
+        - "Yes, I picked a custom song but the wrong one still plays"
+        - "Yes, I want to report my custom choice as a good default for others"
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Game Theme Music version
+      placeholder: e.g. 1.8.2
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Regional game title differences, DLC/edition names, or other games with similar names.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for this game name.
+          required: true
+        - label: I provided links or enough detail to identify the correct track.
+          required: true

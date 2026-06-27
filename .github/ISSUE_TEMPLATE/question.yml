@@ -1,0 +1,56 @@
+name: Question
+description: Ask a question about setup, usage, or compatibility
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for usage questions that are not clearly a bug or feature request.
+
+        For faster help, consider asking in [Discord](https://deckbrew.xyz/discord) as well.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      placeholder: e.g. Does this work with non-Steam games added manually?
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+      description: Steps taken, docs read, or settings changed.
+      placeholder: e.g. Checked README, updated yt-dlp, reinstalled the plugin ...
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Game Theme Music version
+      placeholder: e.g. 1.8.2
+
+  - type: input
+    id: decky-version
+    attributes:
+      label: Decky Loader version
+      placeholder: e.g. 3.0.14
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Steam Deck (SteamOS)
+        - Windows (Steam client)
+        - Other Linux
+        - Other
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I read the README and checked existing issues.
+          required: true

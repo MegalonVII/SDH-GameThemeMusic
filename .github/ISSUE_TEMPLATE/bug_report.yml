@@ -1,0 +1,126 @@
+name: Bug Report
+description: Something is broken or not working as expected
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please fill out as much as you can. Environment details are especially helpful on Steam Deck.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: e.g. Music stops playing when I navigate back to the library.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+      placeholder: e.g. Music should keep playing until I leave the game page.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the steps so someone else can reproduce the issue.
+      placeholder: |
+        1. Open a game page for ...
+        2. ...
+        3. See error / unexpected behavior
+    validations:
+      required: true
+
+  - type: input
+    id: game
+    attributes:
+      label: Game (if relevant)
+      description: Steam or non-Steam game name where the issue occurs.
+      placeholder: e.g. Hollow Knight
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Steam Deck (SteamOS)
+        - Windows (Steam client)
+        - Other Linux
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: Game Theme Music version
+      description: Found in Decky Loader settings → Plugins.
+      placeholder: e.g. 1.8.2
+    validations:
+      required: true
+
+  - type: input
+    id: decky-version
+    attributes:
+      label: Decky Loader version
+      placeholder: e.g. 3.2.4
+    validations:
+      required: true
+
+  - type: input
+    id: steamos-version
+    attributes:
+      label: SteamOS / Steam client version
+      placeholder: e.g. SteamOS 3.8.11 Stable or Steam client build ...
+    validations:
+      required: true
+
+  - type: input
+    id: audioloader-version
+    attributes:
+      label: AudioLoader version (if installed)
+      description: Only needed if the issue involves AudioLoader integration.
+      placeholder: e.g. 1.5.0 or N/A
+
+  - type: dropdown
+    id: internet
+    attributes:
+      label: Internet connection when the issue occurred
+      options:
+        - Online
+        - Offline
+        - Intermittent / unstable
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error messages
+      description: |
+        If possible, include relevant output from Decky Loader logs or the browser console.
+        On Steam Deck, logs are often available via the Decky settings or developer tools.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Screenshots, screen recordings, or anything else that might help.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues to make sure this has not already been reported.
+          required: true
+        - label: I am running a recent version of Game Theme Music and Decky Loader.
+          required: true

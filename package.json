@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -48,7 +48,8 @@
     "rollup": "^4.62.0",
     "rollup-plugin-external-globals": "^0.13.0",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.16.0"
+    "typescript-eslint": "^8.16.0",
+    "vitest": "^3.0.5"
   },
   "dependencies": {
     "@decky/api": "^1.1.3",

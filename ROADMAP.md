@@ -19,5 +19,8 @@ Since this is a continuation fork of the original project, I think I'd like to h
 - [x] Add Button To Update YT-DLP Binary
     -  This may fix some plugin breakages, as YouTube often changes things in the backend that break YT-DLP until it is updated.
 - [ ] Stop Audio Playback When Game Is Running
+- [ ] Music Selection Menu Tab Showing Selected Songs
+    - Thank you @magmacube_123 on Discord for the suggestion!
+
 
 Please let me know if I should add more to this roadmap! Reach out to me on Discord or submit a PR!

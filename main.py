@@ -20,10 +20,30 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+AUDIO_DOWNLOAD_EXTENSIONS = (
+    "mp3",
+    "ogg",
+    "flac",
+    "m4a",
+    "wav",
+    "aac",
+    "opus",
+    "webm",
+    "mp4",
+)
+
+
 def get_audio_filename(id: str) -> str:
     if id.startswith("https://"):
         return hashlib.md5(id.encode()).hexdigest()
     return id
+
+
+def infer_download_extension(url: str) -> str:
+    ext = url.rsplit(".", 1)[-1].lower()
+    if ext not in AUDIO_DOWNLOAD_EXTENSIONS:
+        return "webm"
+    return ext
 
 
 def get_ytdlp_path() -> str:
@@ -145,11 +165,15 @@ class Plugin:
 
     @staticmethod
     def entry_to_info(entry):
+        thumbnails = entry.get("thumbnails") or []
+        thumbnail = entry.get("thumbnail") or (
+            thumbnails[0].get("url") if thumbnails else None
+        )
         return {
             "url": entry.get("url"),
             "title": entry.get("title"),
             "id": entry.get("id"),
-            "thumbnail": entry.get("thumbnail") or entry.get("thumbnails", [{}])[0].get("url"),
+            "thumbnail": thumbnail,
         }
 
     async def fetch_url(self, url: str):
@@ -327,9 +351,7 @@ class Plugin:
             return
 
         filename = get_audio_filename(id)
-        ext = url.rsplit('.', 1)[-1].lower()
-        if ext not in ['mp3', 'ogg', 'flac', 'm4a', 'wav', 'aac', 'opus', 'webm', 'mp4']:
-            ext = 'webm'
+        ext = infer_download_extension(url)
 
         try:
             async with aiohttp.ClientSession() as session:

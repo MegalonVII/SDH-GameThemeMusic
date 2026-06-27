@@ -5,6 +5,7 @@ import useTranslations from '../../hooks/useTranslations'
 import ChangePage from './changePage'
 import AboutPage from './aboutPage'
 import { getResolver } from '../../actions/audio'
+import { getInitialSearch as buildInitialSearch } from '../../lib/searchTerm'
 import { MediaContentPreview } from 'types/media'
 import GameSettings from './gameSettings'
 import { useSettings } from '../../hooks/useSettings'
@@ -22,11 +23,8 @@ export default function ChangeTheme() {
   >([])
   const [loadingNum, setLoadingNum] = useState(0)
 
-  const getInitialSearch = (provider?: string) => {
-    const p = provider || settings.musicProvider
-    if (p === 'khinsider') return appName ?? ''
-    return appName?.concat(' Theme Music') ?? ''
-  }
+  const getInitialSearch = (provider?: string) =>
+    buildInitialSearch(appName, provider, settings.musicProvider)
 
   const [searchTerm, setSearchTerm] = useState(getInitialSearch())
 

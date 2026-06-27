@@ -18,6 +18,7 @@ import useTranslations from '../../hooks/useTranslations'
 import { MediaContentPreview } from 'types/media'
 import NoMusic from './noMusic'
 import { getResolver } from '../../actions/audio'
+import { shouldSkipAudioDownload } from '../../lib/videoId'
 
 export default function ChangePage({
   customSearch,
@@ -62,7 +63,7 @@ export default function ChangePage({
     videoId: string
     audioUrl: string
   }) {
-    if (!audio.videoId.length) {
+    if (shouldSkipAudioDownload(audio.videoId)) {
       setSelected(audio.videoId)
       updateCache(parseInt(appid), { videoId: audio.videoId })
       return

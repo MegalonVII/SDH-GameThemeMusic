@@ -25,7 +25,7 @@ abstract class AudioResolver {
   }
 }
 
-class YtDlpAudioResolver extends AudioResolver {
+export class YtDlpAudioResolver extends AudioResolver {
   async *getYouTubeSearchResults(
     searchTerm: string
   ): AsyncIterable<MediaContentPreview> {
@@ -70,7 +70,7 @@ class YtDlpAudioResolver extends AudioResolver {
   }
 }
 
-class KhinsiderAudioResolver extends AudioResolver {
+export class KhinsiderAudioResolver extends AudioResolver {
   async *getYouTubeSearchResults(
     searchTerm: string
   ): AsyncIterable<MediaContentPreview> {
@@ -190,13 +190,6 @@ class KhinsiderAudioResolver extends AudioResolver {
     }
   }
 
-  private resolveDownloadHref(href: string | null): string | undefined {
-    if (!href || !/\.(mp3|ogg|flac|m4a|wav|aac|opus)$/i.test(href)) return undefined
-    return href.startsWith('http')
-      ? href
-      : `https://downloads.khinsider.com${href}`
-  }
-
   async getAudioUrlFromVideo(video: MediaContent): Promise<string | undefined> {
     const localUrl = await call<[string], string | null>('local_audio_url', video.id)
     if (localUrl) return localUrl
@@ -221,13 +214,13 @@ class KhinsiderAudioResolver extends AudioResolver {
       }
 
       const downloadLink = doc.querySelector('a .songDownloadLink')?.closest('a')
-      const downloadHref = this.resolveDownloadHref(
+      const downloadHref = resolveDownloadHref(
         downloadLink?.getAttribute('href') ?? null
       )
       if (downloadHref) return downloadHref
 
       for (const link of doc.querySelectorAll('a')) {
-        const href = this.resolveDownloadHref(link.getAttribute('href'))
+        const href = resolveDownloadHref(link.getAttribute('href'))
         if (href) return href
       }
 
@@ -258,6 +251,17 @@ class KhinsiderAudioResolver extends AudioResolver {
   async isDownloaded(video: MediaContent): Promise<boolean> {
     return await call<[string], boolean>('local_audio_exists', video.id)
   }
+}
+
+export function resolveDownloadHref(
+  href: string | null
+): string | undefined {
+  if (!href || !/\.(mp3|ogg|flac|m4a|wav|aac|opus)$/i.test(href)) {
+    return undefined
+  }
+  return href.startsWith('http')
+    ? href
+    : `https://downloads.khinsider.com${href}`
 }
 
 export function getResolver(provider?: string): AudioResolver {

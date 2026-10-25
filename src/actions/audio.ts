@@ -92,7 +92,13 @@ export class KhinsiderAudioResolver extends AudioResolver {
   async *getYouTubeSearchResults(
     searchTerm: string
   ): AsyncIterable<MediaContentPreview> {
+    let lastFetchAt = 0
     const fetchDoc = async (url: string) => {
+      const sinceLast = Date.now() - lastFetchAt
+      if (lastFetchAt && sinceLast < 1000) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 - sinceLast))
+      }
+      lastFetchAt = Date.now()
       const result = await call<[string], PageResult>('fetch_page', url)
       if (result.error) throw new MusicSearchError(result.error)
       if (!result.html) return null

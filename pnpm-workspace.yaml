@@ -2,7 +2,6 @@ packages:
   - "."
 
 allowBuilds:
-  deno: true
   esbuild: true
 
 peerDependencyRules:

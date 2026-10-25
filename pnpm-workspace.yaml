@@ -1,0 +1,8 @@
+allowBuilds:
+  deno: true
+  esbuild: true
+
+peerDependencyRules:
+  ignoreMissing:
+    - react
+    - react-dom

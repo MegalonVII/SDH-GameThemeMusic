@@ -1,6 +1,6 @@
 {
   "name": "sdh-gamethememusic",
-  "version": "1.8.21",
+  "version": "1.8.2-1",
   "description": "Play theme songs on your game pages",
   "type": "module",
   "scripts": {

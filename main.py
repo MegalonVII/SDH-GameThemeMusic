@@ -12,6 +12,7 @@ import logging
 import platform
 import shutil
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import decky
 from settings import SettingsManager  # type: ignore
@@ -29,8 +30,22 @@ AUDIO_DOWNLOAD_EXTENSIONS = (
     "aac",
     "opus",
     "webm",
+    "weba",
     "mp4",
 )
+
+MIME_TYPES = {
+    "m4a": "audio/mp4",
+    "mp3": "audio/mpeg",
+    "webm": "audio/webm",
+    "ogg": "audio/ogg",
+    "wav": "audio/wav",
+    "aac": "audio/aac",
+    "flac": "audio/flac",
+    "opus": "audio/ogg",
+    "weba": "audio/webm",
+    "mp4": "audio/mp4",
+}
 
 
 def get_audio_filename(id: str) -> str:
@@ -40,10 +55,18 @@ def get_audio_filename(id: str) -> str:
 
 
 def infer_download_extension(url: str) -> str:
-    ext = url.rsplit(".", 1)[-1].lower()
+    ext = urlsplit(url).path.rstrip("/").rsplit(".", 1)[-1].lower()
     if ext not in AUDIO_DOWNLOAD_EXTENSIONS:
         return "webm"
     return ext
+
+
+def read_audio_data_url(path: str) -> str:
+    extension = path.rsplit(".", 1)[-1].lower()
+    mime_type = MIME_TYPES.get(extension, "audio/webm")
+    logger.info(f"Serving local audio as base64: {path} ({os.path.getsize(path)} bytes)")
+    with open(path, "rb") as file:
+        return f"data:{mime_type};base64,{base64.b64encode(file.read()).decode()}"
 
 
 def get_ytdlp_path() -> str:
@@ -62,9 +85,7 @@ class Plugin:
 
     async def _main(self):
         logger.info("Initializing plugin...")
-        self.settings = SettingsManager(
-            name="config", settings_directory=decky.DECKY_PLUGIN_SETTINGS_DIR
-        )
+        self.settings = SettingsManager(name="config", settings_directory=decky.DECKY_PLUGIN_SETTINGS_DIR)
         
         os.makedirs(self.music_path, exist_ok=True)
         os.makedirs(self.cache_path, exist_ok=True)
@@ -148,11 +169,7 @@ class Plugin:
 
     async def next_yt_result(self):
         async with self.yt_process_lock:
-            if (
-                not self.yt_process
-                or not (output := self.yt_process.stdout)
-                or not (line := (await output.readline()).strip())
-            ):
+            if not self.yt_process or not (output := self.yt_process.stdout) or not (line := (await output.readline()).strip()):
                 logger.info("No more results from yt_process.")
                 return None
             logger.debug(f"Received result line: {line[:100]}...")
@@ -166,9 +183,7 @@ class Plugin:
     @staticmethod
     def entry_to_info(entry):
         thumbnails = entry.get("thumbnails") or []
-        thumbnail = entry.get("thumbnail") or (
-            thumbnails[0].get("url") if thumbnails else None
-        )
+        thumbnail = entry.get("thumbnail") or (thumbnails[0].get("url") if thumbnails else None)
         return {
             "url": entry.get("url"),
             "title": entry.get("title"),
@@ -176,23 +191,38 @@ class Plugin:
             "thumbnail": thumbnail,
         }
 
-    async def fetch_url(self, url: str):
+    async def fetch_page(self, url: str):
         try:
             async with aiohttp.ClientSession() as session:
-                headers = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                }
+                headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
                 async with session.get(url, headers=headers, timeout=10, ssl=self.ssl_context) as response:
-                    return await response.text()
+                    html = await response.text()
+                    error = None
+                    if response.status == 429:
+                        error = "rate_limited"
+                    elif response.status == 403 or response.headers.get("cf-mitigated") == "challenge":
+                        error = "blocked"
+                    elif response.status >= 400:
+                        error = "http_error"
+                    ray_id = response.headers.get("cf-ray")
+                    logger.info(f"fetch_page {response.url} status={response.status} error={error} ray={ray_id}")
+                    return {"html": html if error is None else "", "error": error, "status": response.status}
+
+        except asyncio.TimeoutError:
+            logger.warning(f"fetch_page timed out: {url}")
+            return {"html": "", "error": "timeout", "status": None}
         except Exception as e:
-            print(f"fetch_url error for {url}: {e}")
-            return ""
+            logger.warning(f"fetch_page failed for {url}: {e}")
+            return {"html": "", "error": "network_error", "status": None}
+
+    async def fetch_url(self, url):
+        return (await self.fetch_page(url))["html"]
 
     def local_match(self, id: str) -> str | None:
         filename = glob.escape(id)
         local_matches = [
             x for x in glob.glob(f"{self.music_path}/{filename}.*")
-            if os.path.isfile(x) and x.rsplit('.', 1)[-1].lower() in ['webm', 'm4a', 'mp3', 'ogg', 'wav', 'aac', 'flac', 'opus', 'weba', 'mp4']
+            if os.path.isfile(x) and x.rsplit('.', 1)[-1].lower() in AUDIO_DOWNLOAD_EXTENSIONS
         ]
         if len(local_matches) == 0:
             return None
@@ -205,57 +235,20 @@ class Plugin:
         if local_match is None:
             return None
 
-        file_size = os.path.getsize(local_match)
-        extension = local_match.rsplit(".", 1)[-1].lower()
-        mime_types = {
-            "m4a": "audio/mp4",
-            "mp3": "audio/mpeg",
-            "webm": "audio/webm",
-            "ogg": "audio/ogg",
-            "wav": "audio/wav",
-            "aac": "audio/aac",
-            "flac": "audio/flac",
-            "opus": "audio/ogg",
-            "weba": "audio/webm",
-            "mp4": "audio/mp4"
-        }
-        mime_type = mime_types.get(extension, "audio/webm")
-        logger.info(f"Serving local audio as base64: {local_match} ({file_size} bytes)")
-        with open(local_match, "rb") as file:
-            return f"data:{mime_type};base64,{base64.b64encode(file.read()).decode()}"
+        return read_audio_data_url(local_match)
 
     async def local_audio_exists(self, id: str):
         filename = get_audio_filename(id)
         return self.local_match(filename) is not None
 
     async def single_yt_url(self, id: str):
-        if id.startswith("https://"):
-            url = id
-        else:
-            url = f"https://www.youtube.com/watch?v={id}"
+        url = id if id.startswith("https://") else f"https://www.youtube.com/watch?v={id}"
 
         filename = get_audio_filename(id)
         local_match = self.local_match(filename)
 
         if local_match is not None:
-            file_size = os.path.getsize(local_match)
-            extension = local_match.rsplit(".", 1)[-1].lower()
-            mime_types = {
-                "m4a": "audio/mp4",
-                "mp3": "audio/mpeg",
-                "webm": "audio/webm",
-                "ogg": "audio/ogg",
-                "wav": "audio/wav",
-                "aac": "audio/aac",
-                "flac": "audio/flac",
-                "opus": "audio/ogg",
-                "weba": "audio/webm",
-                "mp4": "audio/mp4"
-            }
-            mime_type = mime_types.get(extension, "audio/webm")
-            logger.info(f"Serving local audio as base64: {local_match} ({file_size} bytes)")
-            with open(local_match, "rb") as file:
-                return f"data:{mime_type};base64,{base64.b64encode(file.read()).decode()}"
+            return read_audio_data_url(local_match)
 
         result = await asyncio.create_subprocess_exec(
             f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp",
@@ -420,10 +413,6 @@ class Plugin:
             logger.warning(f"Cache path not found: {self.cache_path}")
 
     async def update_yt_dlp(self):
-        """
-        Updates the yt-dlp binary to the latest version from GitHub releases.
-        Returns a dict with 'success' (bool) and 'message' (str) keys.
-        """
         try:
             yt_dlp_path = Path(f"{decky.DECKY_PLUGIN_DIR}/bin/yt-dlp")
             bin_dir = yt_dlp_path.parent
@@ -431,15 +420,9 @@ class Plugin:
             bin_dir.mkdir(parents=True, exist_ok=True)
             
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest",
-                    ssl=self.ssl_context
-                ) as response:
+                async with session.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", ssl=self.ssl_context) as response:
                     if response.status != 200:
-                        return {
-                            "success": False,
-                            "message": f"Failed to fetch release info: HTTP {response.status}"
-                        }
+                        return {"success": False, "message": f"Failed to fetch release info: HTTP {response.status}"}
                     release_data = await response.json()
                     tag_name = release_data.get("tag_name", "")
                 
@@ -452,24 +435,15 @@ class Plugin:
                         break
                 
                 if not binary_asset:
-                    return {
-                        "success": False,
-                        "message": "Could not find yt-dlp binary in release assets"
-                    }
+                    return {"success": False, "message": "Could not find yt-dlp binary in release assets"}
                 
                 download_url = binary_asset.get("browser_download_url")
                 if not download_url:
-                    return {
-                        "success": False,
-                        "message": "Could not get download URL"
-                    }
+                    return {"success": False, "message": "Could not get download URL"}
                 
                 async with session.get(download_url, ssl=self.ssl_context) as download_response:
                     if download_response.status != 200:
-                        return {
-                            "success": False,
-                            "message": f"Failed to download binary: HTTP {download_response.status}"
-                        }
+                        return {"success": False, "message": f"Failed to download binary: HTTP {download_response.status}"}
                     
                     temp_path = yt_dlp_path.with_suffix(".tmp")
                     with open(temp_path, "wb") as f:
@@ -482,13 +456,7 @@ class Plugin:
                     
                     yt_dlp_path.chmod(0o755)
                     
-                    return {
-                        "success": True,
-                        "message": f"Successfully updated yt-dlp to {tag_name}"
-                    }
+                    return {"success": True, "message": f"Successfully updated yt-dlp to {tag_name}"}
         
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"Error updating yt-dlp: {str(e)}"
-            }
+            return {"success": False, "message": f"Error updating yt-dlp: {str(e)}"}

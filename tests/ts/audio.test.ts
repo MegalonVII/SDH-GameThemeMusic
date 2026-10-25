@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { call } from '@decky/api'
 
 vi.mock('@decky/api', () => ({
   call: vi.fn()
@@ -8,9 +9,83 @@ import {
   getResolver,
   getResolverForMediaId,
   KhinsiderAudioResolver,
+  MusicSearchError,
   resolveDownloadHref,
   YtDlpAudioResolver
 } from '../../src/actions/audio'
+
+describe('KhinsiderAudioResolver search', () => {
+  afterEach(() => {
+    vi.resetAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('throws when khinsider returns an error page', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const reasons = ['blocked', 'rate_limited', 'timeout', 'http_error', 'network_error']
+
+    for (const reason of reasons) {
+      vi.mocked(call).mockReset()
+      vi.mocked(call).mockResolvedValue({ html: '', status: 403, error: reason })
+      const search = new KhinsiderAudioResolver().getYouTubeSearchResults('Doom')
+      await expect(search.next()).rejects.toMatchObject({
+        name: 'MusicSearchError',
+        reason
+      })
+      expect(call).toHaveBeenCalledTimes(1)
+    }
+  })
+
+  it('finishes when the search page has no albums', async () => {
+    vi.mocked(call).mockResolvedValue({ html: 'empty', status: 200, error: null })
+    vi.stubGlobal(
+      'DOMParser',
+      class {
+        parseFromString() {
+          return { querySelectorAll: () => [] }
+        }
+      }
+    )
+    const search = new KhinsiderAudioResolver().getYouTubeSearchResults('Missing game')
+    await expect(search.next()).resolves.toMatchObject({ done: true })
+  })
+
+  it('stops on the next album if khinsider blocks it', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const link = (href: string, text: string) => ({
+      getAttribute: () => href,
+      textContent: text,
+      closest: () => null
+    })
+    const albums = [1, 2, 3].map((n) => link(`/game-soundtracks/album/${n}`, `Album ${n}`))
+    const track = link('/game-soundtracks/album/1/song.mp3', 'Song')
+    vi.stubGlobal(
+      'DOMParser',
+      class {
+        parseFromString(html: string) {
+          return { querySelectorAll: () => (html === 'search' ? albums : [track]) }
+        }
+      }
+    )
+    vi.mocked(call)
+      .mockResolvedValueOnce({ html: 'search', status: 200, error: null })
+      .mockResolvedValueOnce({ html: 'album', status: 200, error: null })
+      .mockResolvedValueOnce({ html: '', status: 403, error: 'blocked' })
+
+    const search = new KhinsiderAudioResolver().getYouTubeSearchResults('Doom')
+    await expect(search.next()).resolves.toMatchObject({
+      done: false,
+      value: { title: 'Song (Album 1)' }
+    })
+    expect(call).toHaveBeenCalledTimes(2)
+
+    await expect(search.next()).rejects.toBeInstanceOf(MusicSearchError)
+    expect(call).toHaveBeenCalledTimes(3)
+    expect(vi.mocked(call).mock.calls[2][1]).toBe(
+      'https://downloads.khinsider.com/game-soundtracks/album/2'
+    )
+  })
+})
 
 describe('getResolver', () => {
   it('returns KhinsiderAudioResolver for khinsider provider', () => {

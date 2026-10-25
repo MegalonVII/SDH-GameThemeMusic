@@ -18,7 +18,6 @@ import useTranslations from '../../hooks/useTranslations'
 import { MediaContentPreview } from 'types/media'
 import NoMusic from './noMusic'
 import { getResolver } from '../../actions/audio'
-import { shouldSkipAudioDownload } from '../../lib/videoId'
 
 export default function ChangePage({
   customSearch,
@@ -26,12 +25,14 @@ export default function ChangePage({
   setInitialSearch,
   handlePlay,
   loading,
+  searchError,
   videos,
   settings,
   setMusicProvider
 }: {
   videos: (MediaContentPreview & { isPlaying: boolean })[]
   loading: boolean
+  searchError: string | null
   handlePlay: (idx: number, startPlaying: boolean) => void
   customSearch: (term: string) => void
   setInitialSearch: () => string
@@ -63,7 +64,7 @@ export default function ChangePage({
     videoId: string
     audioUrl: string
   }) {
-    if (shouldSkipAudioDownload(audio.videoId)) {
+    if (!audio.videoId) {
       setSelected(audio.videoId)
       updateCache(parseInt(appid), { videoId: audio.videoId })
       return
@@ -142,6 +143,7 @@ export default function ChangePage({
           </Focusable>
         </PanelSectionRow>
       </PanelSection>
+      {searchError && <div style={{ padding: '8px 16px' }}>{searchError}</div>}
       {loading && videos?.length === 0 ? (
         <SteamSpinner />
       ) : (

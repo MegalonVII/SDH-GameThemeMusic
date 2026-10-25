@@ -70,19 +70,34 @@ export class YtDlpAudioResolver extends AudioResolver {
   }
 }
 
+export type SearchFailure = 'blocked' | 'rate_limited' | 'timeout' | 'http_error' | 'network_error'
+
+export class MusicSearchError extends Error {
+  reason: SearchFailure
+
+  constructor(reason: SearchFailure) {
+    super(`Music search failed: ${reason}`)
+    this.reason = reason
+    this.name = 'MusicSearchError'
+  }
+}
+
+type PageResult = {
+  html: string
+  error: SearchFailure | null
+  status: number | null
+}
+
 export class KhinsiderAudioResolver extends AudioResolver {
   async *getYouTubeSearchResults(
     searchTerm: string
   ): AsyncIterable<MediaContentPreview> {
     const fetchDoc = async (url: string) => {
-      try {
-        const html = await call<[string], string>('fetch_url', url)
-        if (!html) return null
-        const parser = new DOMParser()
-        return parser.parseFromString(html, 'text/html')
-      } catch (e) {
-        return null
-      }
+      const result = await call<[string], PageResult>('fetch_page', url)
+      if (result.error) throw new MusicSearchError(result.error)
+      if (!result.html) return null
+      const parser = new DOMParser()
+      return parser.parseFromString(result.html, 'text/html')
     }
 
     const searchUrl = (query: string) => `https://downloads.khinsider.com/search?search=${encodeURIComponent(query)}`
@@ -129,40 +144,25 @@ export class KhinsiderAudioResolver extends AudioResolver {
       }
 
       const seenTrackHrefs = new Set<string>()
-      const albumResponses = await Promise.all(
-        topAlbums.map(async (album) => {
-          try {
-            const albumDoc = await fetchDoc(album.url)
-            if (!albumDoc) return []
+      for (const album of topAlbums) {
+        const albumDoc = await fetchDoc(album.url)
+        if (!albumDoc) continue
 
-            const results: MediaContentPreview[] = []
-            const trackLinks = Array.from(albumDoc.querySelectorAll('.playlistItem td.clickable-row a, #songlist td.clickable-row a'))
+        const trackLinks = Array.from(albumDoc.querySelectorAll('.playlistItem td.clickable-row a, #songlist td.clickable-row a'))
 
-            for (const trackLink of trackLinks) {
-              const href = trackLink.getAttribute('href')
-              if (!href || seenTrackHrefs.has(href)) continue
-              seenTrackHrefs.add(href)
+        for (const trackLink of trackLinks) {
+          const href = trackLink.getAttribute('href')
+          if (!href || seenTrackHrefs.has(href)) continue
+          seenTrackHrefs.add(href)
 
-              const trackUrl = href.startsWith('http') ? href : `https://downloads.khinsider.com${href}`
-              const trackTitle = trackLink.textContent?.trim() || 'Track'
+          const trackUrl = href.startsWith('http') ? href : `https://downloads.khinsider.com${href}`
+          const trackTitle = trackLink.textContent?.trim() || 'Track'
 
-              results.push({
-                id: trackUrl,
-                title: `${trackTitle} (${album.title})`,
-                thumbnail: album.thumbnail
-              })
-            }
-            return results
-          } catch (e) {
-            console.error(`Failed to fetch album ${album.url}`, e)
-            return []
+          yield {
+            id: trackUrl,
+            title: `${trackTitle} (${album.title})`,
+            thumbnail: album.thumbnail
           }
-        })
-      )
-
-      for (const batch of albumResponses) {
-        for (const track of batch) {
-          yield track
         }
       }
 
@@ -187,6 +187,7 @@ export class KhinsiderAudioResolver extends AudioResolver {
       }
     } catch (err) {
       console.error("KHInsider search failed:", err)
+      throw err
     }
   }
 

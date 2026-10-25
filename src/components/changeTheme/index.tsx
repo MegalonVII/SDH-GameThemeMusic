@@ -4,11 +4,20 @@ import { useEffect, useState } from 'react'
 import useTranslations from '../../hooks/useTranslations'
 import ChangePage from './changePage'
 import AboutPage from './aboutPage'
-import { getResolver } from '../../actions/audio'
+import { getResolver, MusicSearchError, SearchFailure } from '../../actions/audio'
 import { getInitialSearch as buildInitialSearch } from '../../lib/searchTerm'
 import { MediaContentPreview } from 'types/media'
 import GameSettings from './gameSettings'
 import { useSettings } from '../../hooks/useSettings'
+
+const searchErrorMessages = {
+  blocked: 'searchBlocked',
+  rate_limited: 'searchRateLimited',
+  timeout: 'searchTimedOut',
+  http_error: 'searchFailed',
+  network_error: 'searchFailed',
+  unknown: 'searchFailed'
+} as const
 
 export default function ChangeTheme() {
   const [currentTab, setCurrentTab] = useState<string>('change-music-tab')
@@ -22,6 +31,8 @@ export default function ChangeTheme() {
     (MediaContentPreview & { isPlaying: boolean })[]
   >([])
   const [loadingNum, setLoadingNum] = useState(0)
+  const [searchError, setSearchError] = useState<SearchFailure | 'unknown' | null>(null)
+  const [searchAttempt, setSearchAttempt] = useState(0)
 
   const getInitialSearch = (provider?: string) =>
     buildInitialSearch(appName, provider, settings.musicProvider)
@@ -48,13 +59,21 @@ export default function ChangeTheme() {
     async function getData() {
       setLoadingNum((x) => x + 1)
       setVideos([])
-      const resolver = getResolver(settings.musicProvider)
-      const res = resolver.getYouTubeSearchResults(searchTerm)
-      for await (const video of res) {
-        if (ignore) break
-        setVideos((oldVideos) => [...oldVideos, { isPlaying: false, ...video }])
+      setSearchError(null)
+      try {
+        const resolver = getResolver(settings.musicProvider)
+        const res = resolver.getYouTubeSearchResults(searchTerm)
+        for await (const video of res) {
+          if (ignore) break
+          setVideos((oldVideos) => [...oldVideos, { isPlaying: false, ...video }])
+        }
+      } catch (error) {
+        if (!ignore) {
+          setSearchError(error instanceof MusicSearchError ? error.reason : 'unknown')
+        }
+      } finally {
+        setLoadingNum((x) => x - 1)
       }
-      setLoadingNum((x) => x - 1)
     }
     if (searchTerm.length > 0 && !settingsLoading) {
       getData()
@@ -62,7 +81,13 @@ export default function ChangeTheme() {
     return () => {
       ignore = true
     }
-  }, [searchTerm, settingsLoading, settings.musicProvider])
+  }, [searchTerm, searchAttempt, settingsLoading, settings.musicProvider])
+
+  function submitSearch(term: string) {
+    setSearchTerm(term)
+    // same text won't retrigger the effect on its own
+    setSearchAttempt((attempt) => attempt + 1)
+  }
 
   function handlePlay(index: number, startPlay: boolean) {
     setVideos((oldVideos) => {
@@ -76,7 +101,7 @@ export default function ChangeTheme() {
 
   function setInitialSearch() {
     const term = getInitialSearch()
-    setSearchTerm(term)
+    submitSearch(term)
     return term
   }
 
@@ -98,8 +123,9 @@ export default function ChangeTheme() {
               <ChangePage
                 videos={videos}
                 loading={loadingNum > 0}
+                searchError={searchError ? t(searchErrorMessages[searchError]) : null}
                 handlePlay={handlePlay}
-                customSearch={setSearchTerm}
+                customSearch={submitSearch}
                 currentSearch={searchTerm}
                 setInitialSearch={setInitialSearch}
                 settings={settings}

@@ -8,7 +8,7 @@ localforage.config({
 })
 
 type GameThemeMusicCache = {
-  videoId?: string | undefined
+  videoId?: string
   volume?: number
 }
 
